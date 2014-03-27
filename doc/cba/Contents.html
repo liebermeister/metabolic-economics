@@ -1,0 +1,93 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of Contents</title>
+  <meta name="keywords" content="Contents">
+  <meta name="description" content="MATLAB Toolbox for Metabolic-Economic Analysis of metabolic models">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">cba</a> &gt; Contents.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for cba&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>Contents
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>MATLAB Toolbox for Metabolic-Economic Analysis of metabolic models</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>This is a script file. </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> MATLAB Toolbox for Metabolic-Economic Analysis of metabolic models
+
+ The toolbox is based on the Metabolic Network Toolbox and uses
+ its functions and data structures. Main purposes are:
+
+   o Compute economical flux distributions
+   o Test if flux distributions are economical (and thermo-feasible)
+   o Compute economic potentials in agreement with a given flux distribution
+   o Realise an economical flux distribution by an enzyme-balanced kinetic model
+   o Optimise the enzyme levels in a kinetic model, leading to an enzyme-optimal state
+
+ Options for all functions are stored in common
+ matlab structs called 'cba_options' and 'cba_constraints'.
+
+
+ Main functions (in directory 'cba')
+
+ Options
+   cba_default_options     - Set options in data structures 'cba_options' and 'cba_constraints'
+
+ Feasible flux distribution 
+   cba_adjust_fluxes       - Correct a flux distribution by removing economically infeasible cycles
+
+ Check flux distribution (based on different types of information given)
+   cba_feasible_cycle      - Check economical flux distribution (non-beneficial cycle criterion)
+   cba_feasible_efm        - Check economical flux distribution (given non-beneficial flux modes)
+   cba_feasible_lp         - Check flux mode for EFA criteria; choose enzyme costs and thermodynamic forces
+
+ Compute economic potentials given fluxes
+   cba_homogeneous_cost    - Determine economic potentials from the principle of even enzyme cost
+
+ Compute fluxes and economic potentials
+   cba_economic_state            - Find fluxes, chemical and economic potentials satisfying FBA/EBA/CBA constraints
+   cba_check               - Check flux mode, chem. pot. differences, and spec. flux costs for feasibility
+
+ Enzyme-balanced kinetic models
+   cba_reconstruct_model   - Reconstruct enzyme-balanced model from economical flux mode
+   cba_economic_potentials - Compute economic potentials and their sensitivities in a kinetic model
+   cba_check_model         - Check kinetic model for being in an enzyme-optimal state
+
+ Further utility functions can be found in 'cba_utils'
+
+
+ MATLAB Toolbox required: Metabolic Network Toolbox
+
+ Copyright (C) 2012-2013  
+ Wolfram Liebermeister  &lt;wolfram.liebermeister@gmail.com&gt;</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+
+<hr><address>Generated on Wed 10-Apr-2013 10:41:29 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of cba_flux2model_mrl_constraint_xi</title>
+  <meta name="keywords" content="cba_flux2model_mrl_constraint_xi">
+  <meta name="description" content="function [g, geq, Ec_un, beta_M, beta_A, beta_I, c, mu, CJ] = cba_flux2model_mrl_constraint_xi(xi,Mplus,Mminus,Wplus,Wminus,v,N,ind_ext,cba_constraints,kinetic_law)">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">cba</a> &gt; <a href="index.html">cba_utils</a> &gt; cba_flux2model_mrl_constraint_xi.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for cba/cba_utils&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>cba_flux2model_mrl_constraint_xi
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function [g, geq, Ec_un, beta_M, beta_A, beta_I, c, mu, CJ] = cba_flux2model_mrl_constraint_xi(xi,Mplus,Mminus,Wplus,Wminus,v,N,ind_ext,cba_constraints,kinetic_law)</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function [g, geq, Ec_un, beta_M, beta_A, beta_I, c, mu, CJ] = cba_flux2model_mrl_constraint_xi(xi,Mplus,Mminus,Wplus,Wminus,v,N,ind_ext,cba_constraints,kinetic_law,h) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> function [g, geq, Ec_un, beta_M, beta_A, beta_I, c, mu, CJ] = cba_flux2model_mrl_constraint_xi(xi,Mplus,Mminus,Wplus,Wminus,v,N,ind_ext,cba_constraints,kinetic_law)
+
+ choose state parameters (mu0, c, alphas) such that
+  o all flux control coefficient on benefit are positive
+  o all reaction affinities and fluxes have the same signs</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001  <a name="_sub0" href="#_subfunctions" class="code">function [g, geq, Ec_un, beta_M, beta_A, beta_I, c, mu, CJ] = cba_flux2model_mrl_constraint_xi(xi,Mplus,Mminus,Wplus,Wminus,v,N,ind_ext,cba_constraints,kinetic_law,h)</a>
+0002 
+0003 <span class="comment">% function [g, geq, Ec_un, beta_M, beta_A, beta_I, c, mu, CJ] = cba_flux2model_mrl_constraint_xi(xi,Mplus,Mminus,Wplus,Wminus,v,N,ind_ext,cba_constraints,kinetic_law)</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% choose state parameters (mu0, c, alphas) such that</span>
+0006 <span class="comment">%  o all flux control coefficient on benefit are positive</span>
+0007 <span class="comment">%  o all reaction affinities and fluxes have the same signs</span>
+0008 
+0009 eval(default(<span class="string">'h'</span>,<span class="string">'ones(size(v))'</span>));
+0010 
+0011 [nr, nm] = size(Mplus);
+0012 
+0013 M       = Mplus + Mminus;
+0014 alpha_M = zeros(size(M)); 
+0015 alpha_A = zeros(size(M)); 
+0016 alpha_I = zeros(size(M)); 
+0017 beta_M  = zeros(size(M)); 
+0018 beta_A  = zeros(size(M)); 
+0019 beta_I  = zeros(size(M)); 
+0020 
+0021 ind_KM = find(M);
+0022 ind_KA = find(Wplus);
+0023 ind_KI = find(Wminus);
+0024 n_KM   = length(ind_KM);
+0025 n_KA   = length(ind_KA);
+0026 n_KI   = length(ind_KI);
+0027 
+0028 mu0  = xi(1:nm);
+0029 ln_c = xi(nm+[1:nm]);
+0030 c    = exp(ln_c);
+0031 
+0032 mu   = mu0 + RT*ln_c;
+0033 A    = -N'*mu;
+0034 A(A==0) = 10^-10; <span class="comment">% simple fix to avoid divergence</span>
+0035 zeta = exp(h.*A/RT);
+0036 
+0037 E_sc_T = diag(zeta./[zeta-1]) * Mplus - diag(1./[zeta-1]) * Mminus;
+0038 
+0039 alpha_M(ind_KM) = 1-xi(2*nm+[1:n_KM]);
+0040 beta_M( ind_KM) =   xi(2*nm+[1:n_KM]);
+0041 
+0042 alpha_A(ind_KA) = 1-xi(2*nm+n_KM + [1:n_KA]);
+0043 beta_A( ind_KA) =   xi(2*nm+n_KM + [1:n_KA]);
+0044 
+0045 alpha_I(ind_KI) = 1-xi(2*nm+n_KM + n_KA + [1:n_KI]);
+0046 beta_I( ind_KI) =   xi(2*nm+n_KM + n_KA + [1:n_KI]);
+0047 
+0048 <span class="comment">% -----------------------------------------------------------</span>
+0049 <span class="comment">% copy from compute_modular_elasticities</span>
+0050 
+0051 <span class="keyword">switch</span> kinetic_law,  
+0052 
+0053   <span class="keyword">case</span> {<span class="string">'cs'</span>,<span class="string">'ms'</span>}
+0054     alpha_M( find((Mplus==0).*(Mminus==0)) ) = 1;  <span class="comment">% irrelevant elements</span>
+0055     psi_plus    = prod((1./alpha_M) .^ Mplus, 2);
+0056     psi_minus   = prod((1./alpha_M) .^ Mminus,2);
+0057 
+0058   <span class="keyword">case</span> {<span class="string">'ds'</span>,<span class="string">'fd'</span>},
+0059     alpha_M( find((Mplus==0).*(Mminus==0)) ) = 1/2; <span class="comment">% irrelevant elements</span>
+0060     xi_plus  = prod((1./alpha_M-1) .^ Mplus, 2);
+0061     xi_minus = prod((1./alpha_M-1) .^ Mminus,2);
+0062 
+0063   <span class="keyword">otherwise</span> error(<span class="string">'Unknown kinetic law'</span>);
+0064 
+0065 <span class="keyword">end</span>
+0066 
+0067 <span class="keyword">switch</span> kinetic_law,  
+0068   <span class="keyword">case</span> <span class="string">'cs'</span>,
+0069     D               = psi_plus + psi_minus - 1;
+0070     E_sc_Dc_kinetic = diag(1./D) * beta_M .* [diag(psi_plus) * Mplus + diag(psi_minus) * Mminus];
+0071   <span class="keyword">case</span> <span class="string">'ms'</span>,
+0072     D               = psi_plus .* psi_minus;
+0073     E_sc_Dc_kinetic = beta_M   .* [ Mplus + Mminus ];
+0074   <span class="keyword">case</span> <span class="string">'ds'</span>,
+0075     D               = xi_plus + xi_minus + 1;
+0076     E_sc_Dc_kinetic = diag(1./D) * [ diag(xi_plus) * Mplus + diag(xi_minus) * Mminus ];
+0077   <span class="keyword">case</span> <span class="string">'rp'</span>,
+0078     D               = ones(nm,1);
+0079     E_sc_Dc_kinetic = zeros(nr,nm);
+0080   <span class="keyword">case</span> <span class="string">'fd'</span>,
+0081     D               = sqrt(xi_plus .* xi_minus);
+0082     E_sc_Dc_kinetic = 1/2 * [ Mplus + Mminus ];
+0083 <span class="keyword">end</span>
+0084 
+0085 E_sc_c_regulation = alpha_A .* Wplus - beta_I .* Wminus;
+0086 
+0087 <span class="comment">% -----------------------------------------------------------</span>
+0088 
+0089 Ec_un = diag(v) * [E_sc_T - E_sc_Dc_kinetic + E_sc_c_regulation] * diag(1./c);
+0090 
+0091 ind_int = setdiff(1:nr,ind_ext);
+0092 N_int   = N(ind_int,:);
+0093 E_int   = Ec_un(:,ind_int);
+0094 
+0095 CJ      = eye(nr) - E_int * pinv(N_int*E_int) * N_int;
+0096 
+0097 g       = [- diag(sign(v)) * CJ' * cba_constraints.zv + cba_constraints.zx_scaled_min; <span class="keyword">...</span>
+0098            ];<span class="comment">%-sign(v .* A) .* double(v~=0) - 0.1 ];</span>
+0099 
+0100 geq     = [];</pre></div>
+<hr><address>Generated on Wed 10-Apr-2013 10:41:29 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

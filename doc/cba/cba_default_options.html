@@ -1,0 +1,159 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of cba_default_options</title>
+  <meta name="keywords" content="cba_default_options">
+  <meta name="description" content="CBA_DEFAULT_OPTIONS - Default settings for directives in 'cba_options' and 'cba_constraints'">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">cba</a> &gt; cba_default_options.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for cba&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>cba_default_options
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>CBA_DEFAULT_OPTIONS - Default settings for directives in 'cba_options' and 'cba_constraints'</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [cba_options,cba_constraints] = cba_default_options(network) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> CBA_DEFAULT_OPTIONS - Default settings for directives in 'cba_options' and 'cba_constraints'
+
+ [cba_options, cba_constraints] = cba_default_cba_options(network)
+
+ Set default values for structures 'cba_options' and 'cba_constraints' 
+
+ cba_constraints.v_fix:         vector predetermined fluxes
+ cba_constraints.v_min:         vector of lower bounds
+ cba_constraints.v_max:         vector of upper bounds
+ cba_constraints.v_sign:        predetermined flux signs
+ cba_constraints.v_mean:        vector of data values (mean)
+ cba_constraints.v_std:         vector of data values (std dev)
+ cba_constraints.ext_sign:      sign vector for external metabolite production
+                                
+ cba_constraints.mu_fix:        given mu values        
+ cba_constraints.mu_min:        lower bounds for mu values  
+ cba_constraints.mu_max:        upper bounds for mu values
+ cba_constraints.dmu_fix:       given delta mu values        
+ cba_constraints.dmu_min:       lower bounds for delta mu values  
+ cba_constraints.dmu_max:       upper bounds for delta mu values  
+ cba_constraints.dmu_sign:      upper bounds for delta mu values  
+ cba_constraints.ind_controllable: which enzymes are controllable?
+
+ cba_options.seed               random seed
+ cba_options.compute_mu         'mu' or 'delta_mu'
+ cba_options.verbose            (Boolean)
+ cba_options.test_eba           1
+ cba_options.test_cba           1
+ cba_options.kinetic_law        'cs'
+ cba_options.cba_conditions     'y'
+ cba_options.objective          'fba', 'fit'
+ cba_options.check_curvatures   default:1</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="../demo/demo_yeast_ccm_reconstruct_model.html" class="code" title="">demo_yeast_ccm_reconstruct_model</a>	DEMO_YEAST_CCM_RECONSTUCT_MODEL - Demo script for reconstruction of enzyme-balanced models</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [cba_options,cba_constraints] = cba_default_options(network)</a>
+0002 
+0003 <span class="comment">% CBA_DEFAULT_OPTIONS - Default settings for directives in 'cba_options' and 'cba_constraints'</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% [cba_options, cba_constraints] = cba_default_cba_options(network)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% Set default values for structures 'cba_options' and 'cba_constraints'</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% cba_constraints.v_fix:         vector predetermined fluxes</span>
+0010 <span class="comment">% cba_constraints.v_min:         vector of lower bounds</span>
+0011 <span class="comment">% cba_constraints.v_max:         vector of upper bounds</span>
+0012 <span class="comment">% cba_constraints.v_sign:        predetermined flux signs</span>
+0013 <span class="comment">% cba_constraints.v_mean:        vector of data values (mean)</span>
+0014 <span class="comment">% cba_constraints.v_std:         vector of data values (std dev)</span>
+0015 <span class="comment">% cba_constraints.ext_sign:      sign vector for external metabolite production</span>
+0016 <span class="comment">%</span>
+0017 <span class="comment">% cba_constraints.mu_fix:        given mu values</span>
+0018 <span class="comment">% cba_constraints.mu_min:        lower bounds for mu values</span>
+0019 <span class="comment">% cba_constraints.mu_max:        upper bounds for mu values</span>
+0020 <span class="comment">% cba_constraints.dmu_fix:       given delta mu values</span>
+0021 <span class="comment">% cba_constraints.dmu_min:       lower bounds for delta mu values</span>
+0022 <span class="comment">% cba_constraints.dmu_max:       upper bounds for delta mu values</span>
+0023 <span class="comment">% cba_constraints.dmu_sign:      upper bounds for delta mu values</span>
+0024 <span class="comment">% cba_constraints.ind_controllable: which enzymes are controllable?</span>
+0025 <span class="comment">%</span>
+0026 <span class="comment">% cba_options.seed               random seed</span>
+0027 <span class="comment">% cba_options.compute_mu         'mu' or 'delta_mu'</span>
+0028 <span class="comment">% cba_options.verbose            (Boolean)</span>
+0029 <span class="comment">% cba_options.test_eba           1</span>
+0030 <span class="comment">% cba_options.test_cba           1</span>
+0031 <span class="comment">% cba_options.kinetic_law        'cs'</span>
+0032 <span class="comment">% cba_options.cba_conditions     'y'</span>
+0033 <span class="comment">% cba_options.objective          'fba', 'fit'</span>
+0034 <span class="comment">% cba_options.check_curvatures   default:1</span>
+0035 
+0036 [nm,nr] = size(network.N);
+0037 
+0038 cba_constraints.v_fix       = nan * ones(nr,1);
+0039 cba_constraints.v_min       = - ones(nr,1);
+0040 cba_constraints.v_max       =   ones(nr,1);
+0041 cba_constraints.v_sign      = nan * ones(nr,1);
+0042 cba_constraints.v_mean      = nan * ones(nr,1);
+0043 cba_constraints.v_std       = nan * ones(nr,1);
+0044 cba_constraints.ext_sign    = nan * ones(nm,1);
+0045 
+0046 cba_constraints.mu_fix      = nan * ones(nm,1);
+0047 cba_constraints.mu_min      = - ones(nm,1);
+0048 cba_constraints.mu_max      =   ones(nm,1);
+0049 cba_constraints.dmu_fix     = nan * ones(nr,1);
+0050 cba_constraints.dmu_min     = - ones(nr,1);
+0051 cba_constraints.dmu_max     =   ones(nr,1);
+0052 cba_constraints.dmu_sign    = nan* ones(nr,1);
+0053 
+0054 cba_constraints.y_min       = []; <span class="comment">% rate value</span>
+0055 cba_constraints.y_max       = []; <span class="comment">% rate value</span>
+0056 
+0057 cba_constraints.w_min       = []; <span class="comment">% metabolite value</span>
+0058 cba_constraints.w_max       = []; <span class="comment">% metabolite value</span>
+0059 
+0060 cba_constraints.z_ext       = []; <span class="comment">% benefit for production of external metabolites</span>
+0061 cba_constraints.z_int       = zeros(nr,1); <span class="comment">% direct benefit for fluxes</span>
+0062 cba_constraints.zc          = []; <span class="comment">% benefit for concentration of internal metabolites</span>
+0063 
+0064 cba_constraints.zx_scaled_min = 0.001;
+0065 cba_constraints.u             = nan * ones(nr,1);
+0066 
+0067 cba_constraints.N_tot       = network.N;
+0068 cba_constraints.fx          = .1; <span class="comment">% first-order enzyme cost</span>
+0069 cba_constraints.fxx         = .1; <span class="comment">% second-order enzyme cost</span>
+0070 
+0071 cba_constraints.ind_controllable = 1:nr; <span class="comment">% controllable enzymes</span>
+0072 
+0073 cba_options.seed         = nan;
+0074 cba_options.compute_mu   = <span class="string">'delta_mu'</span>;
+0075 cba_options.verbose      = 0;
+0076 cba_options.test_eba     = 1;
+0077 cba_options.test_cba     = 1;
+0078 cba_options.kinetic_law  = <span class="string">'cs'</span>;
+0079 cba_options.cba_conditions = <span class="string">'y'</span>;
+0080 cba_options.objective    = <span class="string">'fba'</span>; <span class="comment">% 'fit'</span>
+0081 cba_options.check_curvatures = 1;</pre></div>
+<hr><address>Generated on Wed 10-Apr-2013 10:41:29 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

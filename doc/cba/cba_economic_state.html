@@ -1,0 +1,340 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of cba_economic_state</title>
+  <meta name="keywords" content="cba_economic_state">
+  <meta name="description" content="CBA_ECONOMIC_STATE - Find fluxes, chemical and economic potentials satisfying FBA/EBA/CBA constraints">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">cba</a> &gt; cba_economic_state.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for cba&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>cba_economic_state
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>CBA_ECONOMIC_STATE - Find fluxes, chemical and economic potentials satisfying FBA/EBA/CBA constraints</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function result = cba_economic_state(N, external, cba_constraints, cba_options) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> CBA_ECONOMIC_STATE - Find fluxes, chemical and economic potentials satisfying FBA/EBA/CBA constraints
+
+ result = cba_economic_state(N, external, cba_constraints, cba_options)
+
+ Determine feasible flux vector v, chemical potential differences dmu, 
+ and rate values y under EBA and CBA constraints with either
+  - linear FBA objective (zv' * v) 
+  - sum of squared residuals objective sum([[v-v_mean]/v_std].^2)
+ plus a small Euclidean norm term for regularisation
+
+ Output:
+   result.v      - Flux mode
+   result.dmu    - Chemical potential differences
+   result.y      - (only exists if cba_options.cba_conditions == 'y')
+   result.w      - (only exists if cba_options.cba_conditions == 'w')
+   result.value  - Objective function</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="../cba/cba_utils/cbaf1.html" class="code" title="function f = cbaf1(x,zv,weights)">cbaf1</a>	constraints for EBA and CBA</li><li><a href="../cba/cba_utils/cbaf2.html" class="code" title="function [C, Ceq] = cbaf2(x,p)">cbaf2</a>	constraints for EBA and CBA</li><li><a href="../cba/cba_utils/cbaf2w.html" class="code" title="function [C, Ceq] = cbaf2w(x,p)">cbaf2w</a>	constraints for EBA and CBA</li><li><a href="../cba/cba_utils/cbaf3.html" class="code" title="function f = cbaf3(x,v_mean,v_std)">cbaf3</a>	constraints for EBA and CBA</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function result = cba_economic_state(N, external, cba_constraints, cba_options)</a>
+0002 
+0003 <span class="comment">% CBA_ECONOMIC_STATE - Find fluxes, chemical and economic potentials satisfying FBA/EBA/CBA constraints</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% result = cba_economic_state(N, external, cba_constraints, cba_options)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% Determine feasible flux vector v, chemical potential differences dmu,</span>
+0008 <span class="comment">% and rate values y under EBA and CBA constraints with either</span>
+0009 <span class="comment">%  - linear FBA objective (zv' * v)</span>
+0010 <span class="comment">%  - sum of squared residuals objective sum([[v-v_mean]/v_std].^2)</span>
+0011 <span class="comment">% plus a small Euclidean norm term for regularisation</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">% Output:</span>
+0014 <span class="comment">%   result.v      - Flux mode</span>
+0015 <span class="comment">%   result.dmu    - Chemical potential differences</span>
+0016 <span class="comment">%   result.y      - (only exists if cba_options.cba_conditions == 'y')</span>
+0017 <span class="comment">%   result.w      - (only exists if cba_options.cba_conditions == 'w')</span>
+0018 <span class="comment">%   result.value  - Objective function</span>
+0019 
+0020 
+0021 <span class="comment">% The constraints given by cba_constraints.mu_fix, cba_constraints.dmu_fix are ignored</span>
+0022 
+0023 
+0024 <span class="comment">%  ------------------------------------------------------------</span>
+0025 <span class="comment">% initialisation</span>
+0026 
+0027 [nm,nr]      = size(N);
+0028 
+0029 epsilon = 10^-3;
+0030 
+0031 cba_constraints.v_min(find(cba_constraints.v_sign==1))  = epsilon;
+0032 cba_constraints.v_max(find(cba_constraints.v_sign==-1)) = -epsilon;
+0033 
+0034 <span class="keyword">if</span> isempty(cba_constraints.dmu_min),  cba_constraints.dmu_min = -10*ones(nr,1); <span class="keyword">end</span>
+0035 <span class="keyword">if</span> isempty(cba_constraints.dmu_max),  cba_constraints.dmu_max =  10*ones(nr,1); <span class="keyword">end</span>
+0036 <span class="keyword">if</span> isempty(cba_constraints.y_min),    cba_constraints.y_min   = -10*ones(nr,1); <span class="keyword">end</span>
+0037 <span class="keyword">if</span> isempty(cba_constraints.y_max),    cba_constraints.y_max   =  10*ones(nr,1); <span class="keyword">end</span>
+0038 <span class="keyword">if</span> isempty(cba_constraints.w_min),    cba_constraints.w_min   = -10*ones(nm,1); <span class="keyword">end</span>
+0039 <span class="keyword">if</span> isempty(cba_constraints.w_max),    cba_constraints.w_max   =  10*ones(nm,1); <span class="keyword">end</span>
+0040 
+0041 zv           = cba_constraints.zv;
+0042 ind_v_fix    = find(isfinite(cba_constraints.v_fix));
+0043 ind_extsigns = find(isfinite(cba_constraints.ext_sign));
+0044 n_int        = sum(external==0); 
+0045 N_int        = N(find(external==0),:);
+0046 Ktot         = analyse_N(N);
+0047 Kint         = analyse_N(N(find(external==0),:));
+0048 nKint        = size(Kint,2);
+0049 nKtot        = size(Ktot,2);
+0050 my_eye       = eye(nr);
+0051 regularisation_weight  = 0; <span class="comment">% weights for regularisation term</span>
+0052 
+0053 
+0054 <span class="comment">% ------------------------------------------------------------</span>
+0055 <span class="comment">% vector x contains all (v, dmu, y) or (v, dmu, w)</span>
+0056 <span class="comment">% indices within vector (either ind_y or ind_w is unnecessary)</span>
+0057 
+0058 ind_v   =           1:nr;
+0059 ind_dmu =     nr + (1:nr);
+0060 ind_y   = 2 * nr + (1:nr);
+0061 ind_w   = 2 * nr + (1:nm);
+0062 
+0063 
+0064 <span class="comment">% ------------------------------------------------------</span>
+0065 <span class="comment">% cba_constraints:</span>
+0066 <span class="comment">%</span>
+0067 <span class="comment">% (where v = x(ind_v), dmu = x(ind_dmu), y = x(ind_y), w = x(ind_w) )</span>
+0068 <span class="comment">%</span>
+0069 <span class="comment">% limits           : cba_constraints.v_min   &lt;=  x(ind_v)   &lt;= cba_constraints.v_max</span>
+0070 <span class="comment">%                  : cba_constraints.dmu_min &lt;=  x(ind_dmu) &lt;= cba_constraints.dmu_max</span>
+0071 <span class="comment">%                  : cba_constraints.y_min   &lt;=  x(ind_y)   &lt;= cba_constraints.y_max</span>
+0072 <span class="comment">% regularisation   : sum(x.^2) = min !</span>
+0073 <span class="comment">%</span>
+0074 <span class="comment">% fixed fluxes     : x(ind_v_fix)          = cba_constraints.v_fix(ind_v_fix)</span>
+0075 <span class="comment">% stationary fluxes: N_int * x(ind_v )   = 0</span>
+0076 <span class="comment">% positive objective: zv' * x(ind_v )   &gt; 0</span>
+0077 <span class="comment">%</span>
+0078 <span class="comment">% eba, wegscheider : Ktot' * x(ind_dmu)  = 0</span>
+0079 <span class="comment">% eba signs        : diag(x(ind_v)) * x(ind_dmu) &lt;= - epsilon &lt; 0   where v == 0</span>
+0080 <span class="comment">%</span>
+0081 <span class="comment">% variant 1: use rate values y</span>
+0082 <span class="comment">%   y balance      : Kint' * x(ind_y)    = Kint' * zv</span>
+0083 <span class="comment">%   y signs        : diag(x(ind_v)) * x(ind_y) &gt;= epsilon &gt; 0   where v == 0</span>
+0084 <span class="comment">%</span>
+0085 <span class="comment">% variant 2: use metabolite values w</span>
+0086 <span class="comment">%   w signs        : diag(x(ind_v)) * [ N' * x(ind_w) + zv] &gt;= epsilon &gt; 0 if v == 0</span>
+0087 
+0088 <span class="comment">% ------------------------------------------------------</span>
+0089 <span class="comment">% rewrite this in the form</span>
+0090 <span class="comment">%</span>
+0091 <span class="comment">% Aeq * x  = beq</span>
+0092 <span class="comment">%   A * x &lt;= b</span>
+0093 <span class="comment">%       C  = cbaf2(x,N)   (for signs)</span>
+0094 <span class="comment">%     min != cbaf1(x)     (regularisation)</span>
+0095 
+0096 
+0097 <span class="keyword">switch</span> cba_options.cba_conditions, 
+0098   
+0099   <span class="keyword">case</span> <span class="string">'y'</span>, 
+0100 
+0101     display(<span class="string">'Optimisation with rate values y'</span>);
+0102 
+0103     <span class="comment">%% Equality cba_constraints:</span>
+0104     <span class="comment">%%  v_fix</span>
+0105     <span class="comment">%%  stationarity</span>
+0106     <span class="comment">%%  wegscheider for dmu</span>
+0107     <span class="comment">%%  balance for y</span>
+0108     
+0109     Aeq  = double([my_eye(ind_v_fix,:), zeros(length(ind_v_fix),2*nr)      ; <span class="keyword">...</span>
+0110                    N_int,               zeros(n_int,2*nr)                  ; <span class="keyword">...</span>
+0111                    zeros(nKtot,nr),     Ktot',            zeros(nKtot,nr)  ; <span class="keyword">...</span>
+0112                    zeros(nKint,2*nr),                     Kint'             ]);
+0113 
+0114     beq  = double([cba_constraints.v_fix(ind_v_fix);<span class="keyword">...</span><span class="comment"> </span>
+0115                    zeros(n_int,1)              ;<span class="keyword">...</span>
+0116                    zeros(nKtot,1)              ;<span class="keyword">...</span>
+0117                    Kint' * zv ]);
+0118 
+0119     xmin   = [cba_constraints.v_min; cba_constraints.dmu_min; cba_constraints.y_min];
+0120     xmax   = [cba_constraints.v_max; cba_constraints.dmu_max; cba_constraints.y_max];
+0121     zvfull = [cba_constraints.zv ; zeros(nr,1); zeros(nr,1)];
+0122 
+0123     <span class="comment">%% inequality cba_constraints:</span>
+0124     <span class="comment">%% positive objective</span>
+0125     <span class="comment">%% external signs</span>
+0126     
+0127     A = [-zv', zeros(1,2*nr) ; <span class="keyword">...</span>
+0128          double([-diag(cba_constraints.ext_sign(ind_extsigns)) * N(ind_extsigns,:), <span class="keyword">...</span>
+0129                  zeros(length(ind_extsigns),2*nr)])];
+0130     
+0131     b = [0; zeros(length(ind_extsigns),1)];
+0132     
+0133   <span class="keyword">case</span> <span class="string">'w'</span>,  
+0134 
+0135     display(<span class="string">'Optimisation with metabolite values w'</span>);
+0136 
+0137     <span class="comment">%% Equality cba_constraints:</span>
+0138     <span class="comment">%%  v_fix</span>
+0139     <span class="comment">%%  stationarity</span>
+0140     <span class="comment">%%  wegscheider for dmu</span>
+0141     
+0142     Aeq  = double([my_eye(ind_v_fix,:),    zeros(length(ind_v_fix),nr+nm) ; <span class="keyword">...</span>
+0143                    N_int,                 zeros(n_int,nr+nm)              ; <span class="keyword">...</span>
+0144                    zeros(nKtot,nr),       Ktot',          zeros(nKtot,nm)]);
+0145     
+0146     beq  = double([cba_constraints.v_fix(ind_v_fix);<span class="keyword">...</span><span class="comment"> </span>
+0147                    zeros(n_int,1)           ;<span class="keyword">...</span>
+0148                    zeros(nKtot,1)          ]);
+0149 
+0150     xmin   = [cba_constraints.v_min; cba_constraints.dmu_min; cba_constraints.w_min];
+0151     xmax   = [cba_constraints.v_max; cba_constraints.dmu_max; cba_constraints.w_max];
+0152     zvfull = [cba_constraints.zv; zeros(nr,1); zeros(nm,1)];
+0153 
+0154     
+0155     <span class="comment">%% inequality cba_constraints:</span>
+0156     <span class="comment">%% positive objective</span>
+0157     <span class="comment">%% external signs</span>
+0158     
+0159     A = [zv', zeros(1,nr+nm) ; <span class="keyword">...</span>
+0160          double([-diag(cba_constraints.ext_sign(ind_extsigns)) * N(ind_extsigns,:), <span class="keyword">...</span>
+0161                  zeros(length(ind_extsigns),nr+nm)])];
+0162     
+0163     b = [0; zeros(length(ind_extsigns),1)];
+0164     
+0165     <span class="comment">%% inequality cba_constraints:</span>
+0166     <span class="comment">%% positive objective</span>
+0167     <span class="comment">%% external signs</span>
+0168     
+0169     A = [-zv', zeros(1,nr+nm) ; <span class="keyword">...</span>
+0170          double([-diag(cba_constraints.ext_sign(ind_extsigns)) * N(ind_extsigns,:), <span class="keyword">...</span>
+0171                  zeros(length(ind_extsigns),nr+nm)])];
+0172     
+0173     b = [0; zeros(length(ind_extsigns),1)];
+0174     
+0175 <span class="keyword">end</span>
+0176 
+0177 
+0178 <span class="comment">% ----------------------------------------------------------</span>
+0179 <span class="comment">% optimisation</span>
+0180 
+0181 ppp.Ntrans  = full(N');
+0182 ppp.ind_v   = ind_v;
+0183 ppp.ind_dmu = ind_dmu;
+0184 ppp.ind_y   = ind_y;
+0185 ppp.ind_w   = ind_w;
+0186 ppp.zv      = zv;
+0187 
+0188 opt = optimset(<span class="string">'MaxFunEvals'</span>,10000);
+0189 
+0190 <span class="keyword">switch</span> cba_options.objective
+0191   
+0192   <span class="keyword">case</span> <span class="string">'fba'</span>,
+0193 
+0194     <span class="keyword">switch</span> cba_options.cba_conditions
+0195       <span class="keyword">case</span> <span class="string">'y'</span>, <span class="comment">%% use constraint function cba2f</span>
+0196         x0 = rand(3*nr,1)-.5;
+0197         weights = regularisation_weight * ones(size(x0));
+0198         ppp.epsilon = -0.1;
+0199         [xtry,negvalue,exitflag] = fmincon(@(xx)<a href="../cba/cba_utils/cbaf1.html" class="code" title="function f = cbaf1(x,zv,weights)">cbaf1</a>(xx,zvfull,weights), x0, A, b, Aeq, beq, xmin, xmax, @(xx)<a href="../cba/cba_utils/cbaf2.html" class="code" title="function [C, Ceq] = cbaf2(x,p)">cbaf2</a>(xx,ppp), opt);
+0200         <span class="comment">%% run, with slightly relaxed feasibility criterion</span>
+0201         ppp.epsilon = -0.001;
+0202         [x,negvalue,exitflag] = fmincon(@(x)<a href="../cba/cba_utils/cbaf1.html" class="code" title="function f = cbaf1(x,zv,weights)">cbaf1</a>(x,zvfull,weights), xtry, A, b, Aeq, beq, xmin, xmax, @(xx)<a href="../cba/cba_utils/cbaf2.html" class="code" title="function [C, Ceq] = cbaf2(x,p)">cbaf2</a>(xx,ppp), opt);
+0203       <span class="keyword">case</span> <span class="string">'w'</span>, <span class="comment">%% use constraint function cba2fw</span>
+0204         x0 = rand(2*nr+nm,1)-.5;
+0205         weights = regularisation_weight * ones(size(x0));
+0206         ppp.epsilon = -0.1;
+0207         [xtry,negvalue,exitflag] = fmincon(@(xx)<a href="../cba/cba_utils/cbaf1.html" class="code" title="function f = cbaf1(x,zv,weights)">cbaf1</a>(xx,zvfull,weights), x0, A, b, Aeq, beq, xmin, xmax, @(xx)<a href="../cba/cba_utils/cbaf2w.html" class="code" title="function [C, Ceq] = cbaf2w(x,p)">cbaf2w</a>(xx,ppp), opt);
+0208         <span class="comment">%% run, with slightly relaxed feasibility criterion</span>
+0209         ppp.epsilon = -0.001;
+0210         [x,negvalue,exitflag] = fmincon(@(x)<a href="../cba/cba_utils/cbaf1.html" class="code" title="function f = cbaf1(x,zv,weights)">cbaf1</a>(x,zvfull,weights), xtry, A, b, Aeq, beq, xmin, xmax, @(xx)<a href="../cba/cba_utils/cbaf2w.html" class="code" title="function [C, Ceq] = cbaf2w(x,p)">cbaf2w</a>(xx,ppp), opt);
+0211     <span class="keyword">end</span>
+0212     
+0213   <span class="keyword">case</span> <span class="string">'fit'</span>,
+0214 
+0215     v_mean = cba_constraints.v_mean;
+0216     v_std  = cba_constraints.v_std;
+0217     <span class="keyword">switch</span> cba_options.cba_conditions
+0218       <span class="keyword">case</span> <span class="string">'y'</span>, <span class="comment">%% use constraint function cba2f</span>
+0219         x0 = rand(3*nr,1)-.5;
+0220         ppp.epsilon = -0.1;
+0221         [xtry,value,exitflag] = fmincon(@(xx)<a href="../cba/cba_utils/cbaf3.html" class="code" title="function f = cbaf3(x,v_mean,v_std)">cbaf3</a>(xx,v_mean,v_std), x0, A, b, Aeq, beq, xmin, xmax, @(xx)<a href="../cba/cba_utils/cbaf2.html" class="code" title="function [C, Ceq] = cbaf2(x,p)">cbaf2</a>(xx,ppp), opt);
+0222         <span class="comment">%% run, with slightly relaxed feasibility criterion</span>
+0223         ppp.epsilon = -0.001;
+0224         [x,value,exitflag] = fmincon(@(x)<a href="../cba/cba_utils/cbaf3.html" class="code" title="function f = cbaf3(x,v_mean,v_std)">cbaf3</a>(x,v_mean,v_std), xtry, A, b, Aeq, beq, xmin, xmax, @(xx)<a href="../cba/cba_utils/cbaf2.html" class="code" title="function [C, Ceq] = cbaf2(x,p)">cbaf2</a>(xx,ppp), opt);
+0225       <span class="keyword">case</span> <span class="string">'w'</span>, <span class="comment">%% use constraint function cba2fw</span>
+0226         x0 = rand(2*nr+nm,1)-.5;
+0227         weights = regularisation_weight * ones(size(x0));
+0228         ppp.epsilon = -0.1;
+0229         [xtry,value,exitflag] = fmincon(@(xx)<a href="../cba/cba_utils/cbaf3.html" class="code" title="function f = cbaf3(x,v_mean,v_std)">cbaf3</a>(xx,v_mean,v_std), x0, A, b, Aeq, beq, xmin, xmax, @(xx)<a href="../cba/cba_utils/cbaf2w.html" class="code" title="function [C, Ceq] = cbaf2w(x,p)">cbaf2w</a>(xx,ppp), opt)
+0230         <span class="comment">%% run, with slightly relaxed feasibility criterion</span>
+0231         ppp.epsilon = -0.001;
+0232         [x,value,exitflag] = fmincon(@(x)<a href="../cba/cba_utils/cbaf3.html" class="code" title="function f = cbaf3(x,v_mean,v_std)">cbaf3</a>(x,v_mean,v_std), xtry, A, b, Aeq, beq, xmin, xmax, @(xx)<a href="../cba/cba_utils/cbaf2w.html" class="code" title="function [C, Ceq] = cbaf2w(x,p)">cbaf2w</a>(xx,ppp), opt)
+0233     <span class="keyword">end</span>
+0234     
+0235 <span class="keyword">end</span>
+0236 
+0237 <span class="comment">% ----------------------------------------------------------</span>
+0238 <span class="comment">% format the output</span>
+0239 
+0240 v     = nan * ones(nr,1);
+0241 dmu   = nan * ones(nr,1);
+0242 y     = nan * ones(nr,1);
+0243 w     = nan * ones(nm,1);
+0244 value = nan;
+0245 
+0246 <span class="keyword">if</span> exitflag&lt;=0,
+0247   display(<span class="string">'CBA failed'</span>);
+0248 <span class="keyword">else</span>,
+0249   v   = x(ind_v);
+0250   dmu = x(ind_dmu);
+0251   <span class="keyword">switch</span> cba_options.objective
+0252     <span class="keyword">case</span> <span class="string">'fba'</span>,
+0253       value = -negvalue; 
+0254   <span class="keyword">end</span>
+0255   <span class="keyword">switch</span> cba_options.cba_conditions,
+0256     <span class="keyword">case</span> <span class="string">'y'</span>, y = x(ind_y);
+0257     <span class="keyword">case</span> <span class="string">'w'</span>, w = x(ind_w);
+0258   <span class="keyword">end</span>
+0259 
+0260   <span class="keyword">if</span> value &lt; 0, warning(<span class="string">'Objective function is negative'</span>); <span class="keyword">end</span>
+0261   <span class="keyword">if</span> sum(v.*dmu &gt; 0), warning(<span class="string">'Solution violates EBA constraint'</span>); <span class="keyword">end</span>
+0262   <span class="keyword">switch</span> cba_options.cba_conditions,
+0263     <span class="keyword">case</span> <span class="string">'y'</span>, 
+0264       <span class="keyword">if</span> sum(v.*y &lt; 0), warning(<span class="string">'Solution violates CBA constraint'</span>); <span class="keyword">end</span>
+0265     <span class="keyword">case</span> <span class="string">'w'</span>,
+0266       <span class="keyword">if</span> sum(v.*[N'*w+zv] &lt; 0), warning(<span class="string">'Solution violates CBA constraint'</span>); <span class="keyword">end</span>
+0267   <span class="keyword">end</span>
+0268   
+0269 <span class="keyword">end</span>
+0270 
+0271 result.value = value; 
+0272 result.v     = v;
+0273 result.dmu   = dmu;
+0274 
+0275 <span class="keyword">switch</span> cba_options.cba_conditions,
+0276   <span class="keyword">case</span> <span class="string">'y'</span>,    result.y  = y;
+0277   <span class="keyword">case</span> <span class="string">'w'</span>,    result.w  = w;
+0278 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Wed 10-Apr-2013 10:41:29 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

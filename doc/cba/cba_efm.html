@@ -1,0 +1,180 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of cba_efm</title>
+  <meta name="keywords" content="cba_efm">
+  <meta name="description" content="CBA_EFM - Determine economical flux mode using elementary flux modes">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">cba</a> &gt; cba_efm.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for cba&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>cba_efm
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>CBA_EFM - Determine economical flux mode using elementary flux modes</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function v_efm = cba_efm(network, efm_length_max, n_lonely_max, flag_all_internal, zv) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> CBA_EFM - Determine economical flux mode using elementary flux modes
+
+ v_efm = cba_efm(network, efm_length_max, n_lonely_max, flag_all_internal, zv)</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="../cba/cba_utils/cba_efm_remove_duplicates.html" class="code" title="function M = efm_remove_duplicates(M)">cba_efm_remove_duplicates</a>	M = efm_remove_duplicates(M)</li><li><a href="../cba/cba_utils/cba_efm_remove_nonelementary.html" class="code" title="function M = efm_remove_nonelementary(M,E)">cba_efm_remove_nonelementary</a>	M = efm_remove_nonelementary(M,E)</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function v_efm = cba_efm(network, efm_length_max, n_lonely_max, flag_all_internal, zv)</a>
+0002 
+0003 <span class="comment">% CBA_EFM - Determine economical flux mode using elementary flux modes</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% v_efm = cba_efm(network, efm_length_max, n_lonely_max, flag_all_internal, zv)</span>
+0006 
+0007 <span class="keyword">if</span> flag_all_internal,
+0008   display(<span class="string">'Considering only completely balanced EFMs'</span>);
+0009   network.external = 0 * network.external;
+0010 <span class="keyword">end</span>
+0011 
+0012 <span class="keyword">if</span> exist(<span class="string">'zv'</span>,<span class="string">'var'</span>), <span class="comment">% accept only modes with zero benefit</span>
+0013   display(<span class="string">'Elementary mode with nonzero benefits are excluded'</span>);
+0014 <span class="keyword">end</span>
+0015 
+0016 N       = sparse(network.N);
+0017 
+0018 [nm,nr] = size(N);
+0019 ind_rev = find(network.reversible);
+0020 ind_irr = setdiff(1:nr,ind_rev);
+0021 ind_int = find(network.external==0);
+0022 
+0023 efm_length     = 1;
+0024 efm_found      = sparse([]);
+0025 efm_suspected  = speye(nr);
+0026 cont           = 1;
+0027 
+0028 
+0029 <span class="comment">% ------------------------------------------------------------</span>
+0030 
+0031 <span class="keyword">while</span> cont,
+0032 
+0033 M        = abs(N(ind_int,:));
+0034 M_lonely = M*efm_suspected==1; <span class="comment">% indicates which metabolites remain</span>
+0035                                <span class="comment">% lonely in which newly suggested mode</span>
+0036 
+0037 n_lonely_metabolites = sum(M_lonely,1);
+0038 ind_putative   = find(n_lonely_metabolites==0);
+0039 <span class="comment">%ind_impossible = find(sum(M_lonely,1));</span>
+0040 
+0041 <span class="comment">%heuristics: disregards sets with too many lonely metabolites</span>
+0042 ind_impossible = find( [n_lonely_metabolites &gt; 0] .* [n_lonely_metabolites &lt;= n_lonely_max]);
+0043 
+0044 <span class="comment">% ------------------------------------------------------------</span>
+0045 <span class="comment">% find putative new efms, confirm them, and add them to known efms</span>
+0046 
+0047 efm_putative = efm_suspected(:,ind_putative);
+0048 efm_putative = <a href="../cba/cba_utils/cba_efm_remove_duplicates.html" class="code" title="function M = efm_remove_duplicates(M)">cba_efm_remove_duplicates</a>(efm_putative);
+0049 efm_putative = <a href="../cba/cba_utils/cba_efm_remove_nonelementary.html" class="code" title="function M = efm_remove_nonelementary(M,E)">cba_efm_remove_nonelementary</a>(efm_putative,efm_found);
+0050 
+0051 n_putative   = size(efm_putative,2);
+0052 confirmed    = ones(n_putative,1);
+0053 
+0054 <span class="keyword">for</span> it = 1:n_putative,
+0055   <span class="keyword">if</span> exist(<span class="string">'zv'</span>,<span class="string">'var'</span>),
+0056     this_N = [zv(find(efm_putative(:,it)))';<span class="keyword">...</span>
+0057               N(ind_int,find(efm_putative(:,it)))];
+0058   <span class="keyword">else</span>,
+0059     this_N = N(ind_int,find(efm_putative(:,it)));
+0060   <span class="keyword">end</span>    
+0061   v = null(full(this_N));
+0062   <span class="keyword">if</span> isempty(v), 
+0063     confirmed(it) = 0;  <span class="comment">% flux must exist</span>
+0064   <span class="keyword">elseif</span> find(abs(v)&lt;10^-10), 
+0065     confirmed(it) = 0;   <span class="comment">% must use the entire set</span>
+0066   <span class="keyword">end</span>
+0067 <span class="keyword">end</span>
+0068 
+0069 efm_confirmed = efm_putative(:,find(confirmed));
+0070 efm_found     = [efm_found, efm_confirmed];
+0071 n_found       = size(efm_found,2);
+0072 
+0073 <span class="keyword">if</span> efm_length &gt;= efm_length_max, 
+0074 
+0075   cont = 0; 
+0076 
+0077 <span class="keyword">else</span>
+0078 
+0079 
+0080 <span class="comment">% ------------------------------------------------------------</span>
+0081 <span class="comment">% find enzyme sets with lonely metabolites and expand them</span>
+0082 
+0083 efm_impossible = efm_suspected(:,ind_impossible);
+0084 n_impossible   = size(efm_impossible,2);
+0085 
+0086 <span class="comment">%% which reactions should be added to which impossible,  suggested  efm?</span>
+0087 M_new_reaction = M'*M_lonely(:,ind_impossible)&gt;0; 
+0088 M_new_reaction = [M_new_reaction - efm_impossible]&gt;0;
+0089 
+0090 clear M M_lonely;
+0091 
+0092 efm_suspected  = [];
+0093 
+0094 <span class="keyword">for</span> it = 1:length(ind_impossible),
+0095   this_new_reactions = M_new_reaction(:,it);
+0096   bb = diag(this_new_reactions);
+0097   aa = repmat(efm_impossible(:,it),1,sum(this_new_reactions)) + bb(:,find(  this_new_reactions));
+0098   efm_suspected  = [efm_suspected,aa];
+0099 <span class="keyword">end</span>
+0100 
+0101 clear M_new_reaction
+0102 
+0103 <span class="comment">% remove modes that contain a previously confirmed mode</span>
+0104 
+0105 efm_suspected = <a href="../cba/cba_utils/cba_efm_remove_duplicates.html" class="code" title="function M = efm_remove_duplicates(M)">cba_efm_remove_duplicates</a>(efm_suspected);
+0106 efm_suspected = <a href="../cba/cba_utils/cba_efm_remove_nonelementary.html" class="code" title="function M = efm_remove_nonelementary(M,E)">cba_efm_remove_nonelementary</a>(efm_suspected,efm_found);
+0107 
+0108 n_suspected = size(efm_suspected,2);
+0109 
+0110 display(sprintf(<span class="string">'EFM length: %d Found: %d Kept: %d To be checked next: %d'</span>,efm_length, n_found, n_impossible, n_suspected));
+0111 
+0112 <span class="keyword">if</span> n_suspected ==0, cont = 0; <span class="keyword">end</span>
+0113 
+0114 efm_length = efm_length + 1;
+0115 
+0116 <span class="keyword">end</span>  
+0117 <span class="keyword">end</span>
+0118 
+0119 
+0120 <span class="comment">% ------------------------------------------------</span>
+0121 <span class="comment">% compute stationary fluxes</span>
+0122 
+0123 v_efm = zeros(size(efm_found));
+0124 
+0125 <span class="keyword">for</span> it = 1:size(efm_found,2),
+0126   ind_this_efm = find(efm_found(:,it));
+0127   this_N = N(ind_int,ind_this_efm);
+0128   v_efm(ind_this_efm,it) = null(full(this_N),<span class="string">'r'</span>);
+0129 <span class="keyword">end</span>
+0130 
+0131 display(sprintf(<span class="string">'Calculation finished. %d EFMs with maximal length %d found'</span>,n_found,efm_length));</pre></div>
+<hr><address>Generated on Fri 05-Apr-2013 21:48:31 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

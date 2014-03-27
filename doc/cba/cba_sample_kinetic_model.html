@@ -1,0 +1,163 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of cba_sample_kinetic_model</title>
+  <meta name="keywords" content="cba_sample_kinetic_model">
+  <meta name="description" content="CBA_SAMPLE_KINETIC_MODEL - Sample an enzyme-balanced kinetic model">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">cba</a> &gt; cba_sample_kinetic_model.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for cba&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>cba_sample_kinetic_model
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>CBA_SAMPLE_KINETIC_MODEL - Sample an enzyme-balanced kinetic model</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [network,result,ind_shut_off,zx,zv,delta_w,w_int,w_ext] = cba_sample_kinetic_model(network,v,cba_constraints,cba_options) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> CBA_SAMPLE_KINETIC_MODEL - Sample an enzyme-balanced kinetic model
+
+ [network,result,ind_shut_off,zx,zv,delta_w,w_int,w_ext] = cba_sample_kinetic_model(network,v,cba_constraints,cba_options)
+
+  uses cba_constraints.zv to define benefit function
+  v must be fba/eba/cba-feasible (for check, set cba_options.test_cba = 1)</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="cba_sample_kinetic_model.html" class="code" title="function [network,result,ind_shut_off,zx,zv,delta_w,w_int,w_ext] = cba_sample_kinetic_model(network,v,cba_constraints,cba_options)">cba_sample_kinetic_model</a>	CBA_SAMPLE_KINETIC_MODEL - Sample an enzyme-balanced kinetic model</li><li><a href="../cba/cba_utils/cba_update_constraints.html" class="code" title="function cba_constraints = cba_update_constraints(cba_constraints,Next)">cba_update_constraints</a>	cba_constraints = cba_update_constraints(cba_constraints,Next)</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="cba_sample_kinetic_model.html" class="code" title="function [network,result,ind_shut_off,zx,zv,delta_w,w_int,w_ext] = cba_sample_kinetic_model(network,v,cba_constraints,cba_options)">cba_sample_kinetic_model</a>	CBA_SAMPLE_KINETIC_MODEL - Sample an enzyme-balanced kinetic model</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [network,result,ind_shut_off,zx,zv,delta_w,w_int,w_ext] = cba_sample_kinetic_model(network,v,cba_constraints,cba_options)</a>
+0002 
+0003 <span class="comment">% CBA_SAMPLE_KINETIC_MODEL - Sample an enzyme-balanced kinetic model</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% [network,result,ind_shut_off,zx,zv,delta_w,w_int,w_ext] = cba_sample_kinetic_model(network,v,cba_constraints,cba_options)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">%  uses cba_constraints.zv to define benefit function</span>
+0008 <span class="comment">%  v must be fba/eba/cba-feasible (for check, set cba_options.test_cba = 1)</span>
+0009 
+0010 <span class="comment">% test: branch point network</span>
+0011 
+0012 <span class="keyword">if</span> 0,
+0013   cd ~/matlab/projects/cba/cba_models; 
+0014   load cba_branch_network; 
+0015   v = [2 2 1 1 1 1 1 1]'; 
+0016   [cba_options,cba_constraints] = cba_default_cba_options(network); 
+0017   cba_constraints.z_ext = [1 2 2]'; 
+0018   cba_constraints.zc = zeros(6,1);
+0019   [network,result,ind_shut_off,zx,zv,delta_w,w_all] = <a href="cba_sample_kinetic_model.html" class="code" title="function [network,result,ind_shut_off,zx,zv,delta_w,w_int,w_ext] = cba_sample_kinetic_model(network,v,cba_constraints,cba_options)">cba_sample_kinetic_model</a>(network,v,cba_constraints,cba_options);
+0020   netgraph_concentrations(network,w_all,delta_w+zv,0,struct(<span class="string">'arrowstyle'</span>,<span class="string">'fluxes'</span>,<span class="string">'actstyle'</span>,<span class="string">'none'</span>));
+0021 <span class="keyword">end</span>
+0022 
+0023 epsilon = 10^-8;
+0024 
+0025 cba_constraints = <a href="../cba/cba_utils/cba_update_constraints.html" class="code" title="function cba_constraints = cba_update_constraints(cba_constraints,Next)">cba_update_constraints</a>(cba_constraints);
+0026 
+0027 
+0028 <span class="comment">% -----------------------------------------------------------</span>
+0029 <span class="comment">% check necessary condition for cba-feasibility</span>
+0030 
+0031 <span class="comment">% initialisation</span>
+0032 
+0033 ind_ext = find(network.external);
+0034 ind_int = find(network.external==0);
+0035 w_ind   = [];
+0036 delta_w = [];
+0037 zv      = [];
+0038 cba_options.test_eba = 1;
+0039 
+0040 <span class="comment">%[cba_feasible,zx_scaled,delta_mu] = cba_feasible_lp(v, network.N, network.external, cba_constraints, cba_options);</span>
+0041 
+0042 
+0043 <span class="comment">% -----------------------------------------------------------</span>
+0044 <span class="comment">% sample elasticities and create the model</span>
+0045 
+0046 [es_options,es_constraints] = es_default_options(network);
+0047 es_constraints.v_fix = v;
+0048 es_constraints.Keq   = nan * ones(size(network.actions));
+0049 es_options.flag_second_order = 0;
+0050 es_options.set_alpha_to_half = 0;
+0051 
+0052 result = sample_model(network.N,network.regulation_matrix,find(network.external),es_constraints,es_options);
+0053 
+0054 network.kinetics = result.kinetics;
+0055 <span class="comment">% compute enzyme cost: cost must be balanced by marginal benefit</span>
+0056 
+0057 zx = [cba_constraints.zv' * result.control.RJu_un]';
+0058 
+0059 <span class="keyword">if</span> ~isempty(cba_constraints.zc),
+0060   zx = zx + [cba_constraints.zc' * result.control.RSu_un]';
+0061 <span class="keyword">end</span>
+0062 
+0063  netgraph_concentrations(network_CoHid,network.external,zx,1,struct(<span class="string">'arrowvalues'</span>,v,<span class="string">'actstyle'</span>,<span class="string">'fixed'</span>))
+0064 <span class="comment">%netgraph_concentrations(network_CoHid,network.external,result.control.RJu_un(end,:)',1,struct('arrowvalues',v,'actstyle','fixed'))</span>
+0065 <span class="comment">%netgraph_concentrations(network_CoHid,network.external,result.control.RJu_un(end-1,:)',1,struct('arrowvalues',v,'actstyle','fixed'))</span>
+0066 
+0067 ind_shut_off = find( (zx&lt;=0) .* (abs(v)&gt; epsilon) );
+0068 
+0069 <span class="keyword">if</span> length(ind_shut_off), 
+0070   warning(<span class="string">'It appears that some enzymes should be shut off'</span>);
+0071 <span class="keyword">end</span>;
+0072 
+0073 
+0074 <span class="comment">% -----------------------------------------------------------</span>
+0075 <span class="comment">% compute the metabolite values</span>
+0076 
+0077 [K, L, NR, G, pinv_N_R, indep] = network_analyse(network);
+0078 
+0079 zv    = cba_constraints.zv;
+0080 zc    = cba_constraints.zc;
+0081 Esint = result.elasticities.un_E_c(:,ind_int);
+0082 Esext = result.elasticities.un_E_c(:,ind_ext);
+0083 Ex    = result.elasticities.un_E_u;
+0084 CJ    = result.control.CJ; 
+0085 CS    = result.control.CS; 
+0086 
+0087 <span class="keyword">if</span> length(cba_constraints.zc),
+0088   w_ind   = - [[cba_constraints.zv' * Esint + cba_constraints.zc'] * L * inv(NR*Esint*L)]';
+0089   delta_w =   [cba_constraints.zv'  * CJ - cba_constraints.zv' + cba_constraints.zc' * CS(ind_int,:)]';
+0090 <span class="comment">% check: balance for enzymes</span>
+0091 <span class="comment">% [[zv'*CJ+zc'*CS(ind_int,:)] * Ex; zx']</span>
+0092 <span class="keyword">else</span>,
+0093   w_ind   = - [[cba_constraints.zv' * Esint] * L * inv(NR*Esint*L)]'; 
+0094   delta_w =   [cba_constraints.zv'  * CJ - cba_constraints.zv']';    
+0095 <span class="comment">% delta_w = NR' * w_ind; % alternative calculation</span>
+0096 <span class="comment">% check: balance for enzymes</span>
+0097 <span class="comment">% [[zv'*CJ] * Ex; zx']</span>
+0098 <span class="keyword">end</span>
+0099 
+0100 <span class="comment">% check: balance along reactions</span>
+0101 <span class="comment">% [ diag(v)*[zv + delta_w], diag(network.kinetics.u) * zx ]'</span>
+0102 
+0103 
+0104 <span class="comment">% insert metabolite values into full vectors (length nm)</span>
+0105 
+0106 nm             = size(network.N,1); 
+0107 ind_ind        = ind_int(indep); 
+0108 w_int          = nan*ones(nm,1);
+0109 w_int(ind_ind) = w_ind;
+0110 w_ext          = nan*ones(nm,1);
+0111 w_ext(ind_ext) = [zv' * CJ * Esext]';</pre></div>
+<hr><address>Generated on Fri 05-Apr-2013 21:48:31 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

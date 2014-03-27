@@ -1,0 +1,81 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of cba_metabolite_and_enzyme_prices</title>
+  <meta name="keywords" content="cba_metabolite_and_enzyme_prices">
+  <meta name="description" content="CBA_METABOLITE_AND_ENZYME_PRICES - Convenience function for computing economic quantities">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">cba</a> &gt; cba_metabolite_and_enzyme_prices.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for cba&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>cba_metabolite_and_enzyme_prices
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>CBA_METABOLITE_AND_ENZYME_PRICES - Convenience function for computing economic quantities</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function res = cba_metabolite_and_enzyme_prices(network,c_opt,u_opt,cba_constraints) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> CBA_METABOLITE_AND_ENZYME_PRICES - Convenience function for computing economic quantities
+
+ res = cba_metabolite_and_enzyme_prices(network,c_opt,u_opt,cba_constraints)
+
+ convenience function, calls cba_metabolite_prices and the respective cost function</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="cba_metabolite_prices.html" class="code" title="function [w, v, dw_du,  dv_du] = cba_metabolite_prices(network, c, zv, zc, ind_controllable)">cba_metabolite_prices</a>	CBA_METABOLITE_PRICES - Compute the economic potentials in a kinetic model</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function res = cba_metabolite_and_enzyme_prices(network,c_opt,u_opt,cba_constraints)</a>
+0002 
+0003 <span class="comment">% CBA_METABOLITE_AND_ENZYME_PRICES - Convenience function for computing economic quantities</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% res = cba_metabolite_and_enzyme_prices(network,c_opt,u_opt,cba_constraints)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% convenience function, calls cba_metabolite_prices and the respective cost function</span>
+0008 
+0009 u_opt(find(u_opt/max(u_opt)&lt;10^-5)) = 0;
+0010 
+0011 res.u_opt = u_opt;
+0012 network.kinetics.u = u_opt;
+0013 [nm,nr] = size(network.N);
+0014 
+0015 <span class="keyword">if</span> isempty(cba_constraints.zc),
+0016   cba_constraints.zc = zeros(nm,1);
+0017 <span class="keyword">end</span>
+0018 
+0019 [res.wc, v_opt, res.dw_du,  dv_du] = <a href="cba_metabolite_prices.html" class="code" title="function [w, v, dw_du,  dv_du] = cba_metabolite_prices(network, c, zv, zc, ind_controllable)">cba_metabolite_prices</a>(network, c_opt, cba_constraints.zv, cba_constraints.zc, cba_constraints.ind_controllable);
+0020 
+0021 res.v_opt = v_opt;
+0022 res.f_bene = cba_constraints.zv' * v_opt;
+0023 
+0024 [res.f_cost, res.f_cost_gradient, res.f_cost_hessian] = feval(cba_constraints.fitness_options.cost_function,u_opt,cba_constraints.fitness_options);
+0025 
+0026 res.h_hat = res.f_cost_gradient .* u_opt;
+0027 res.y = res.f_cost_gradient .* u_opt ./ v_opt;
+0028 
+0029 res.w = res.wc;
+0030 res.w(find(network.external)) = res.w(find(network.external))+ cba_constraints.z_ext;</pre></div>
+<hr><address>Generated on Fri 05-Apr-2013 21:48:31 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

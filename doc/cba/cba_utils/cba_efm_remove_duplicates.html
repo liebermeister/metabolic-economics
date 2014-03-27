@@ -1,0 +1,74 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of cba_efm_remove_duplicates</title>
+  <meta name="keywords" content="cba_efm_remove_duplicates">
+  <meta name="description" content="EFM_REMOVE_DUPLICATES - Remove duplicate columns in Elementary Flux Mode Matrix">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">cba</a> &gt; <a href="index.html">cba_utils</a> &gt; cba_efm_remove_duplicates.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for cba/cba_utils&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>cba_efm_remove_duplicates
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>EFM_REMOVE_DUPLICATES - Remove duplicate columns in Elementary Flux Mode Matrix</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function M = efm_remove_duplicates(M) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> EFM_REMOVE_DUPLICATES - Remove duplicate columns in Elementary Flux Mode Matrix
+
+ M = efm_remove_duplicates(M)</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function M = efm_remove_duplicates(M)</a>
+0002 
+0003 <span class="comment">% EFM_REMOVE_DUPLICATES - Remove duplicate columns in Elementary Flux Mode Matrix</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% M = efm_remove_duplicates(M)</span>
+0006 
+0007 <span class="keyword">if</span> length(M),
+0008   
+0009   duplicate = zeros(size(M,2),1);
+0010 
+0011   <span class="comment">%% trick!!</span>
+0012   zeta = randn(1,size(M,1)) * M;
+0013   [dum,order] = sort(zeta);
+0014   M = M(:,order);
+0015   
+0016   n_check = 20; <span class="comment">% how many duplicates of one vector are expected at most?</span>
+0017 
+0018   <span class="keyword">for</span> it = 2:size(M,2),
+0019     ind_check = max(1,it-100):it-1;
+0020     <span class="comment">%%  duplicate(it) = M(:,ind_check)'*M(:,it) == M(:,it)'*M(:,it);</span>
+0021     duplicate(it) = sum( full( sum( abs( M(:,ind_check) - repmat(M(:,it),1,length(ind_check))) ,1))==0)&gt;0;
+0022   <span class="keyword">end</span>
+0023   M = M(:,duplicate==0);
+0024   
+0025 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Wed 10-Apr-2013 10:41:29 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

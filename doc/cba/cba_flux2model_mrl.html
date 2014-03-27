@@ -1,0 +1,208 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of cba_flux2model_mrl</title>
+  <meta name="keywords" content="cba_flux2model_mrl">
+  <meta name="description" content="CBA_FLUX2MODEL_MRL - Construct kinetic model from economical flux mode">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">cba</a> &gt; cba_flux2model_mrl.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for cba&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>cba_flux2model_mrl
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>CBA_FLUX2MODEL_MRL - Construct kinetic model from economical flux mode</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [res, result_act, ind_act, ind_met_act] = cba_flux2model_mrl(network, v, cba_constraints) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> CBA_FLUX2MODEL_MRL - Construct kinetic model from economical flux mode
+
+ [res, result_act, ind_act, ind_met_act] = cba_flux2model_mrl(network, v, cba_constraints)
+
+ cba_constraints.zx_scaled_min minimal scaled enzyme cost (scalar, same minimum for each enzyme)</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="cba_flux2model_mrl.html" class="code" title="function [res, result_act, ind_act, ind_met_act] = cba_flux2model_mrl(network, v, cba_constraints)">cba_flux2model_mrl</a>	CBA_FLUX2MODEL_MRL - Construct kinetic model from economical flux mode</li><li><a href="../cba/cba_utils/cba_flux2model_mrl_constraint.html" class="code" title="function [g, geq, Ec_un, beta_M, beta_A, beta_I, CJ] = cba_flux2model_mrl_constraint(beta_M_vector,Mplus,Mminus,Wplus,Wminus,E_sc_T,v,c,N,ind_ext,cba_constraints,kinetic_law)">cba_flux2model_mrl_constraint</a>	[g, geq, Ec_un, beta_M, beta_A, beta_I, CJ] = cba_flux2model_mrl_constraint(beta_M_vector,Mplus,Mminus,Wplus,Wminus,E_sc_T,v,c,N,ind_ext,cba_constraints,kinetic_law)</li><li><a href="../cba/cba_utils/cba_flux2model_mrl_constraint_xi.html" class="code" title="function [g, geq, Ec_un, beta_M, beta_A, beta_I, c, mu, CJ] = cba_flux2model_mrl_constraint_xi(xi,Mplus,Mminus,Wplus,Wminus,v,N,ind_ext,cba_constraints,kinetic_law,h)">cba_flux2model_mrl_constraint_xi</a>	function [g, geq, Ec_un, beta_M, beta_A, beta_I, c, mu, CJ] = cba_flux2model_mrl_constraint_xi(xi,Mplus,Mminus,Wplus,Wminus,v,N,ind_ext,cba_constraints,kinetic_law)</li><li><a href="../cba/cba_utils/cba_reduce_to_active_subnetwork.html" class="code" title="function [v,N_int,Es,network_act,constraints,ind_active,ind_met_active] = cba_reduce_to_active_subnetwork(v,N_int,Es,network,constraints)">cba_reduce_to_active_subnetwork</a>	[v,N_int,Es,network_act,constraints,ind_active,ind_met_active] = cba_reduce_to_active_subnetwork(v,N_int,Es,network,constraints)</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="cba_flux2model_mrl.html" class="code" title="function [res, result_act, ind_act, ind_met_act] = cba_flux2model_mrl(network, v, cba_constraints)">cba_flux2model_mrl</a>	CBA_FLUX2MODEL_MRL - Construct kinetic model from economical flux mode</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [res, result_act, ind_act, ind_met_act] = cba_flux2model_mrl(network, v, cba_constraints)</a>
+0002 
+0003 <span class="comment">% CBA_FLUX2MODEL_MRL - Construct kinetic model from economical flux mode</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% [res, result_act, ind_act, ind_met_act] = cba_flux2model_mrl(network, v, cba_constraints)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% cba_constraints.zx_scaled_min minimal scaled enzyme cost (scalar, same minimum for each enzyme)</span>
+0008 
+0009 v(find(abs(v)&lt;10^-10)) = 0;
+0010 <span class="keyword">if</span> find(v==0),
+0011   <span class="comment">%% reduce to active subnetwork</span>
+0012   <span class="comment">%% the following three variables are just dummy inputs</span>
+0013   N_int = network.N(find(network.external==0),:);
+0014   Es = -network.N';
+0015   [v_act,N_int_act,Es_act,network_act,cba_constraints_act,ind_act,ind_met_act] = <a href="../cba/cba_utils/cba_reduce_to_active_subnetwork.html" class="code" title="function [v,N_int,Es,network_act,constraints,ind_active,ind_met_active] = cba_reduce_to_active_subnetwork(v,N_int,Es,network,constraints)">cba_reduce_to_active_subnetwork</a>(v,N_int,Es,network,cba_constraints);
+0016   figure(1999); 
+0017   netgraph_concentrations(network_act,[],v_act,1,struct(<span class="string">'actstyle'</span>,<span class="string">'none'</span>));
+0018   title(<span class="string">'Fluxes on active subnetwork'</span>);
+0019   [res_act, result_act] = <a href="cba_flux2model_mrl.html" class="code" title="function [res, result_act, ind_act, ind_met_act] = cba_flux2model_mrl(network, v, cba_constraints)">cba_flux2model_mrl</a>(network_act,v_act,cba_constraints_act);
+0020   [nm,nr] = size(network.N);
+0021   res.w       = nan * ones(nm,1);   res.w(ind_met_act)   = res_act.w;
+0022   res.delta_w = nan * ones(nr,1);   res.delta_w(ind_act) = res_act.delta_w;
+0023   res.zx      = nan * ones(nr,1);   res.zx(ind_act)      = res_act.zx;
+0024   res.mu      = nan * ones(nm,1);   res.mu(ind_met_act)  = res_act.mu;
+0025   warning(<span class="string">'Data structure &quot;result&quot; describes only the active subnetwork'</span>)
+0026   <span class="keyword">return</span>
+0027 <span class="keyword">end</span>
+0028   
+0029 N        = network.N;
+0030 [nm, nr] = size(N);
+0031 W        = network.regulation_matrix;
+0032 ind_ext  = find(network.external);
+0033 ind_int  = find(network.external==0);
+0034 
+0035 stop = 0;
+0036 
+0037 <span class="keyword">while</span> ~stop,
+0038 
+0039 <span class="comment">% -----------------------------------------------------------</span>
+0040 <span class="comment">% sample energetically feasible stationary state</span>
+0041 
+0042 [es_options,es_constraints] = es_default_options(network);
+0043 es_constraints.v_fix         = v;
+0044 es_constraints.Keq           = nan * ones(size(network.actions));
+0045 es_options.flag_second_order = 0;
+0046 es_options.set_alpha_to_half = 0;
+0047 
+0048 [Mplus, Mminus, Wplus, Wminus, nm, nr, N_int] = make_structure_matrices(N, network.regulation_matrix, ind_ext,es_options.h);
+0049 M      = Mplus + Mminus;
+0050 
+0051 beta_vector      = 0.5  * ones(sum(M(:)~=0)+sum(W(:)~=0),1);
+0052 beta_vector_min  = 0.00001 * ones(size(beta_vector));
+0053 beta_vector_max  = 0.99999 * ones(size(beta_vector));
+0054 
+0055 kinetic_law = <span class="string">'ms'</span>;
+0056 opt               = optimset(<span class="string">'fmincon'</span>);
+0057 opt.MaxFunEvals   = 1000000;
+0058 
+0059 
+0060 variant = <span class="string">'sample c'</span>;
+0061 
+0062 <span class="keyword">switch</span> variant, 
+0063   
+0064   <span class="keyword">case</span> <span class="string">'predefine c'</span>,
+0065     
+0066   [c0, c, u, J, Keq, Jred, mu, K, Kma, zeta, A] = es_sample_stationary(N, network.regulation_matrix, ind_ext, es_constraints, es_options);
+0067   
+0068   E_sc_T = diag(zeta./[zeta-1]) * Mplus - diag(1./[zeta-1]) * Mminus;
+0069   
+0070   [beta_vector_opt,fval,exitflag] = fmincon(@(E_vector)sum([beta_vector-0.5].^2), beta_vector,[],[],[],[],beta_vector_min,beta_vector_max, @(beta_vector)<a href="../cba/cba_utils/cba_flux2model_mrl_constraint.html" class="code" title="function [g, geq, Ec_un, beta_M, beta_A, beta_I, CJ] = cba_flux2model_mrl_constraint(beta_M_vector,Mplus,Mminus,Wplus,Wminus,E_sc_T,v,c,N,ind_ext,cba_constraints,kinetic_law)">cba_flux2model_mrl_constraint</a>(beta_vector,Mplus,Mminus,Wplus,Wminus,E_sc_T,v,c,N,ind_ext, cba_constraints,kinetic_law),opt);
+0071 
+0072   [g, geq, Ec_un, beta_M, beta_A, beta_I, CJ] = <a href="../cba/cba_utils/cba_flux2model_mrl_constraint.html" class="code" title="function [g, geq, Ec_un, beta_M, beta_A, beta_I, CJ] = cba_flux2model_mrl_constraint(beta_M_vector,Mplus,Mminus,Wplus,Wminus,E_sc_T,v,c,N,ind_ext,cba_constraints,kinetic_law)">cba_flux2model_mrl_constraint</a>(beta_vector_opt,Mplus,Mminus,Wplus,Wminus,E_sc_T,v,c,N,ind_ext,cba_constraints,kinetic_law);
+0073    
+0074   <span class="keyword">case</span> <span class="string">'sample c'</span>,
+0075     
+0076     mu0       =   zeros(nm,1);
+0077     mu0_min   = - 20*ones(nm,1);
+0078     mu0_max   =   20*ones(nm,1);
+0079     dmu_guess = - tanh(v .* rand(size(v)));
+0080     ln_c      =   [pinv(full(N)') * dmu_guess - mu0]/RT; <span class="comment">% heuristics for first guess</span>
+0081     ln_c_min  = - 20 * ones(nm,1);
+0082     ln_c_max  =   20 * ones(nm,1);
+0083     xi     = [mu0; ln_c; beta_vector];
+0084     xi_min = [mu0_min; ln_c_min; beta_vector_min];
+0085     xi_max = [mu0_max; ln_c_max; beta_vector_max];
+0086     
+0087     [xi_opt,fval,exitflag] = fmincon(@(xi)1, xi,[],[],[],[],xi_min,xi_max, @(xi)<a href="../cba/cba_utils/cba_flux2model_mrl_constraint_xi.html" class="code" title="function [g, geq, Ec_un, beta_M, beta_A, beta_I, c, mu, CJ] = cba_flux2model_mrl_constraint_xi(xi,Mplus,Mminus,Wplus,Wminus,v,N,ind_ext,cba_constraints,kinetic_law,h)">cba_flux2model_mrl_constraint_xi</a>(xi,Mplus,Mminus,Wplus,Wminus,v,N,ind_ext, cba_constraints,kinetic_law),opt);
+0088 
+0089     [g, geq, Ec_un, beta_M, beta_A, beta_I, c, mu, CJ] = <a href="../cba/cba_utils/cba_flux2model_mrl_constraint_xi.html" class="code" title="function [g, geq, Ec_un, beta_M, beta_A, beta_I, c, mu, CJ] = cba_flux2model_mrl_constraint_xi(xi,Mplus,Mminus,Wplus,Wminus,v,N,ind_ext,cba_constraints,kinetic_law,h)">cba_flux2model_mrl_constraint_xi</a>(xi_opt,Mplus,Mminus,Wplus,Wminus,v,N,ind_ext,cba_constraints,kinetic_law);
+0090 
+0091 <span class="keyword">end</span>
+0092 
+0093 <span class="keyword">if</span> exitflag==1,
+0094   stop = 1;
+0095 <span class="keyword">else</span> 
+0096   display(sprintf(<span class="string">'No solution found\n'</span>));
+0097 <span class="keyword">end</span>
+0098 
+0099 
+0100 <span class="comment">%   g</span>
+0101 <span class="comment">%     v</span>
+0102      A = -N'*mu;
+0103 <span class="comment">%     Keq - N'*log(c)</span>
+0104     Cz    = [cba_constraints.zv' * CJ * diag(v)]';
+0105 <span class="comment">%   Cz    = [CJ(end-1,:) * diag(v)]';</span>
+0106 <span class="comment">%   Cz    = [CJ(end-2,:) * diag(v)]';</span>
+0107    figure(1000); netgraph_concentrations(network,[],Cz,1,struct(<span class="string">'arrowstyle'</span>,<span class="string">'none'</span>)); drawnow
+0108    title(<span class="string">'Enzyme control of metabolic benefit (from sampling)'</span>)
+0109    figure(1001); netgraph_concentrations(network,[],sign(Cz),1,struct(<span class="string">'arrowstyle'</span>,<span class="string">'none'</span>)); drawnow
+0110    title(<span class="string">'Enzyme control sign of metabolic benefit (from sampling)'</span>)
+0111    figure(1002); netgraph_concentrations(network,[],sign(A.*v),1,struct(<span class="string">'arrowstyle'</span>,<span class="string">'none'</span>)); drawnow
+0112    title(<span class="string">'Correct flux directions?'</span>)
+0113    figure(1003); netgraph_concentrations(network,[],sign(v),1,struct(<span class="string">'actstyle'</span>,<span class="string">'none'</span>)); drawnow
+0114    title(<span class="string">'Flux directions?'</span>)
+0115   figure(1004); im(CJ,[],network.actions);
+0116 <span class="keyword">end</span>
+0117 
+0118 <span class="keyword">switch</span> variant, 
+0119   <span class="keyword">case</span> <span class="string">'predefine c'</span>,
+0120     [g, geq, Ec_un, beta_M] = <a href="../cba/cba_utils/cba_flux2model_mrl_constraint.html" class="code" title="function [g, geq, Ec_un, beta_M, beta_A, beta_I, CJ] = cba_flux2model_mrl_constraint(beta_M_vector,Mplus,Mminus,Wplus,Wminus,E_sc_T,v,c,N,ind_ext,cba_constraints,kinetic_law)">cba_flux2model_mrl_constraint</a>(beta_vector_opt,Mplus,Mminus,Wplus,Wminus,E_sc_T,v,c,N,ind_ext,cba_constraints,kinetic_law);
+0121   <span class="keyword">case</span> <span class="string">'sample c'</span>,
+0122     [g, geq, Ec_un, beta_M, beta_A, beta_I, c, mu] = <a href="../cba/cba_utils/cba_flux2model_mrl_constraint_xi.html" class="code" title="function [g, geq, Ec_un, beta_M, beta_A, beta_I, c, mu, CJ] = cba_flux2model_mrl_constraint_xi(xi,Mplus,Mminus,Wplus,Wminus,v,N,ind_ext,cba_constraints,kinetic_law,h)">cba_flux2model_mrl_constraint_xi</a>(xi_opt,Mplus,Mminus,Wplus,Wminus,v,N,ind_ext,cba_constraints,kinetic_law);
+0123 <span class="keyword">end</span>
+0124 
+0125 <span class="keyword">if</span> find(isnan(g)), error; <span class="keyword">end</span>
+0126 
+0127 es_constraints.beta_M_fix = beta_M;
+0128 es_constraints.log_c_fix  = log(c);
+0129 es_constraints.mu_fix     = mu;
+0130 es_options.kinetic_law    = kinetic_law;
+0131 result_act = sample_model(N,W,ind_ext,es_constraints,es_options);
+0132 
+0133 
+0134 <span class="comment">% check: do all enzymes have a positive control on the benefit?</span>
+0135 
+0136 <span class="keyword">if</span> sum([[cba_constraints.zv' * result_act.control.CJ]' &lt; cba_constraints.zx_scaled_min * ones(nr,1)]),
+0137   [[cba_constraints.zv' * result_act.control.CJ]', cba_constraints.zx_scaled_min * ones(nr,1)]
+0138   warning(<span class="string">'Economically infeasible state encountered!'</span>)
+0139 <span class="keyword">end</span>
+0140 
+0141 
+0142 <span class="comment">% -----------------------------------------------------------</span>
+0143 
+0144 N_int = N(ind_int,:);
+0145 Ec_un_int = result_act.elasticities.un_E_c(:,ind_int);
+0146 
+0147 w_int   = -[cba_constraints.zv' * Ec_un_int * pinv(N_int * Ec_un_int)]';
+0148 delta_w = N_int'*w_int;
+0149 zx      = diag(v) * [[delta_w + cba_constraints.zv] ./ cba_constraints.u];
+0150 
+0151 w = nan * ones(nm,1);
+0152 w(ind_int) = w_int;
+0153 
+0154 res.w       = w;
+0155 res.zx      = zx;
+0156 res.delta_w = delta_w;
+0157 res.mu      = result_act.mu;</pre></div>
+<hr><address>Generated on Fri 05-Apr-2013 21:48:31 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

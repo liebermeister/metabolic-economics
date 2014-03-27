@@ -1,0 +1,123 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of cba_metabolite_prices</title>
+  <meta name="keywords" content="cba_metabolite_prices">
+  <meta name="description" content="CBA_METABOLITE_PRICES - Compute the economic potentials in a kinetic model">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">cba</a> &gt; cba_metabolite_prices.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for cba&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>cba_metabolite_prices
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>CBA_METABOLITE_PRICES - Compute the economic potentials in a kinetic model</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [w, v, dw_du,  dv_du] = cba_metabolite_prices(network, c, zv, zc, ind_controllable) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> CBA_METABOLITE_PRICES - Compute the economic potentials in a kinetic model
+
+ [w, dw_du] = cba_metabolite_prices(network, c, cba_constraints,ind_controllable)
+
+ Compute the metabolite prices for a kinetic model
+  in a given stationary state
+  as well as their derivatives dq_du with respect 
+  to the controllable enzyme levels
+ 
+ works only for linear benefit functions (weights zv, zc)</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="cba_metabolite_prices.html" class="code" title="function [w, v, dw_du,  dv_du] = cba_metabolite_prices(network, c, zv, zc, ind_controllable)">cba_metabolite_prices</a>	CBA_METABOLITE_PRICES - Compute the economic potentials in a kinetic model</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="cba_metabolite_and_enzyme_prices.html" class="code" title="function res = cba_metabolite_and_enzyme_prices(network,c_opt,u_opt,cba_constraints)">cba_metabolite_and_enzyme_prices</a>	CBA_METABOLITE_AND_ENZYME_PRICES - Convenience function for computing economic quantities</li><li><a href="cba_metabolite_prices.html" class="code" title="function [w, v, dw_du,  dv_du] = cba_metabolite_prices(network, c, zv, zc, ind_controllable)">cba_metabolite_prices</a>	CBA_METABOLITE_PRICES - Compute the economic potentials in a kinetic model</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [w, v, dw_du,  dv_du] = cba_metabolite_prices(network, c, zv, zc, ind_controllable)</a>
+0002 
+0003 <span class="comment">% CBA_METABOLITE_PRICES - Compute the economic potentials in a kinetic model</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% [w, dw_du] = cba_metabolite_prices(network, c, cba_constraints,ind_controllable)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% Compute the metabolite prices for a kinetic model</span>
+0008 <span class="comment">%  in a given stationary state</span>
+0009 <span class="comment">%  as well as their derivatives dq_du with respect</span>
+0010 <span class="comment">%  to the controllable enzyme levels</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% works only for linear benefit functions (weights zv, zc)</span>
+0013 
+0014 
+0015 <span class="comment">% to be sure ... put system into steady state</span>
+0016 [c,v]   = network_steady_state(network,c,200);
+0017 [nm,nr] = size(network.N);
+0018 ind_int = find(network.external==0);
+0019 
+0020 Ec                         = elasticities(network,c);
+0021 [CJ, CS, L_int, NR_int, M, indp_among_internal] = control_coefficients(network.N, Ec, network.external);
+0022 
+0023 <span class="comment">% phi: virtual supply fluxes for independent metabolites</span>
+0024 CS_int_phi = - L_int * pinv(M);
+0025 CS_phi     = zeros(nm,length(indp_among_internal));
+0026 CS_phi(ind_int,:) = CS_int_phi;
+0027 CJ_phi     = Ec(:,ind_int) * CS_int_phi;
+0028 w_ind      = [zv' * CJ_phi + zc' * CS_phi]';
+0029 w          = zeros(nm,1);
+0030 w(ind_int(indp_among_internal)) = w_ind;
+0031 
+0032 <span class="keyword">if</span> nargout &gt; 2,
+0033 
+0034   <span class="comment">%% NUMERICAL DERIVATIVES</span>
+0035   uu = network.kinetics.u;
+0036   dd = 10^-10;
+0037   <span class="keyword">for</span> itt = 1:nr,
+0038     my_du = 0 * uu;
+0039     my_du(itt) = uu(itt) * dd;
+0040     network.kinetics.u = uu + my_du;
+0041     [my_w1, my_v1] = <a href="cba_metabolite_prices.html" class="code" title="function [w, v, dw_du,  dv_du] = cba_metabolite_prices(network, c, zv, zc, ind_controllable)">cba_metabolite_prices</a>(network, c, zv, zc, ind_controllable);
+0042     network.kinetics.u = uu - my_du;
+0043     [my_w2, my_v2] = <a href="cba_metabolite_prices.html" class="code" title="function [w, v, dw_du,  dv_du] = cba_metabolite_prices(network, c, zv, zc, ind_controllable)">cba_metabolite_prices</a>(network, c, zv, zc, ind_controllable);
+0044     dw_du(:,itt) = [my_w1 - my_w2] / [2*dd * uu(itt)];
+0045     dv_du(:,itt) = [my_v1 - my_v2] / [2*dd * uu(itt)];
+0046   <span class="keyword">end</span>
+0047 
+0048   <span class="comment">%% ANALYTICAL!!</span>
+0049   <span class="comment">%% R is not actually control matrix, but &quot;response&quot; to enzyme levels</span>
+0050   <span class="comment">% Ec                         = elasticities(network,c);</span>
+0051   <span class="comment">% [Ec,Ep,parameters,Ecc,Ecp,Epp,p] = elasticities(network,c);</span>
+0052   <span class="comment">% Ecu = Ecp(:,:,1:nr);</span>
+0053   <span class="comment">% v = network_velocities(c,network);</span>
+0054   <span class="comment">% rho_2 = diag(1./v) * Ec;</span>
+0055   <span class="comment">%% VORSICHT: GAMMA-FORMEL IST eventuell noch  FALSCH!!!!</span>
+0056   <span class="comment">%% es wird keine term ber�ksichtigt, der den direkten einfluss</span>
+0057   <span class="comment">%von phi mit dem indirekten von u koppelt. nochmal nachrechnen!</span>
+0058   <span class="comment">% Gamma =   tensor_product(tensor_product(Ecc,CS_phi),CS,2,1) ...</span>
+0059   <span class="comment">%         + permute(tensor_product(Ecu,CS_phi,2,1),[1,3,2]);</span>
+0060   <span class="comment">% RS_phi_u = tensor_product(CS,Gamma);</span>
+0061   <span class="comment">% RJ_phi_u = tensor_product(Ec,RS_phi_u);</span>
+0062   <span class="comment">%</span>
+0063   <span class="comment">% dw_du_ind = squeeze(tensor_product(zv', RJ_phi_u) + tensor_product(zc', RS_phi_u) );</span>
+0064   <span class="comment">% dw_du = zeros(nm,nr);</span>
+0065   <span class="comment">% dw_du(ind_int(indp_among_internal),:) = dw_du_ind;</span>
+0066 
+0067 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Fri 05-Apr-2013 21:48:31 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

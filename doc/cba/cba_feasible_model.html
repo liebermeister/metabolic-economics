@@ -1,0 +1,119 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of cba_feasible_model</title>
+  <meta name="keywords" content="cba_feasible_model">
+  <meta name="description" content="CBA_FEASIBLE_MODEL - Check kinetic model for a feasible stationary state">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">cba</a> &gt; cba_feasible_model.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for cba&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>cba_feasible_model
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>CBA_FEASIBLE_MODEL - Check kinetic model for a feasible stationary state</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [feasible,res] = cba_feasible_model(network,c,u,v,cba_constraints) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> CBA_FEASIBLE_MODEL - Check kinetic model for a feasible stationary state
+
+ cba_feasible_model(network,c,u,cba_constraints)
+
+ Check a kinetic model for being in a feasible stationary state</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [feasible,res] = cba_feasible_model(network,c,u,v,cba_constraints)</a>
+0002 
+0003 <span class="comment">% CBA_FEASIBLE_MODEL - Check kinetic model for a feasible stationary state</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% cba_feasible_model(network,c,u,cba_constraints)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% Check a kinetic model for being in a feasible stationary state</span>
+0008 
+0009 <span class="comment">% stationarity</span>
+0010 
+0011 <span class="comment">% set small enzyme levels to zero;</span>
+0012 
+0013 u(u/median(u) &lt; 0.001) = 0;
+0014 
+0015 [nm,nr] = size(network.N);
+0016 network.kinetics.u = u;
+0017 
+0018 [c_st,v_st]   = network_steady_state(network,c);
+0019 
+0020 res.c_adjusted = c_st;
+0021 res.v_adjusted = v_st;
+0022 res.u_adjusted = u;
+0023 
+0024 res.c_mismatch_norm = norm(c_st - c)/norm(c);
+0025 res.v_mismatch_norm = norm(v_st - v)/norm(v);
+0026 
+0027 res.mismatch_v_constraints = sum(v&lt;cba_constraints.v_min) + sum(v&gt;cba_constraints.v_max);
+0028 
+0029 res.stationarity_mismatch_norm = norm(network.N(network.external==0,:) * v_st);
+0030 
+0031 res.flux_sign_mistakes = find([v_st~=0] .*  [sign(v_st .* [ log(network.kinetics.Keq) - network.N'*log(c_st)]) ==-1]);
+0032 
+0033 R = basic_control_analysis(network,c_st);
+0034 RJu = R.RJ(:,1:nr);
+0035 
+0036 res.dynamically_instable =  sum(real(eig(R.M))&gt;0)&gt;0;
+0037 R_f_u =  cba_constraints.zv' * RJu;
+0038 R_f_u(abs(R_f_u)&lt;0.001*median(abs(R_f_u))) = 0;
+0039 
+0040 res.negative_control = find([u~=0].*R_f_u' &lt;0);
+0041 <span class="keyword">if</span> res.negative_control,
+0042   res.R_f_u = R_f_u;
+0043 <span class="keyword">end</span>
+0044 
+0045 <span class="keyword">if</span> length(res.negative_control),
+0046   figure(10); netgraph_concentrations(network,[], [u~=0].*R_f_u',1); title(<span class="string">'Fitness/enzyme response coefficients'</span>);
+0047 <span class="keyword">end</span>
+0048 
+0049 [f_cost, grad_cost, H_cost] = feval(cba_constraints.fitness_options.cost_function, u, cba_constraints.fitness_options);
+0050 
+0051 fitness_gradient = [cba_constraints.zv' * RJu] - grad_cost';
+0052 res.fitness_gradient_active_norm = norm(fitness_gradient .* [u ~=0]');
+0053 
+0054 [Ec,Ep,parameters,Ecc,Ecp,Epp,p] = elasticities(network,c);
+0055 [CJ, CS] = control_coefficients(network.N, Ec, network.external);
+0056 [RS,RJ,RS2,RJ2] = response_coefficients(CS,Ec,Ep,Ecc,Ecp,Epp);
+0057 
+0058 H_benefit  = squeeze(tensor_product(cba_constraints.zv', RJ2(:,1:nr,1:nr)));
+0059 H_fitness  = H_benefit - H_cost;
+0060 
+0061 res.economically_unstable = sum(eig(H_fitness(find(u&gt;0),find(u&gt;0)))&gt;0)&gt;0;
+0062 
+0063 res.fitness_gradient = fitness_gradient;
+0064 res.fitness_hessian = H_fitness;
+0065 res.benefit_hessian = H_benefit;
+0066 res.cost_hessian = H_cost;
+0067 
+0068 feasible = [res.c_mismatch_norm^2/nm &lt;10^-5] * [res.v_mismatch_norm^2/nr &lt;10^-5] * [res.stationarity_mismatch_norm^2/nr &lt;10^-5] * [res.mismatch_v_constraints ==0] * [length(res.flux_sign_mistakes) ==0] * [res.dynamically_instable ==0] * [length(res.negative_control) ==0] *  [res.fitness_gradient_active_norm^2/sum(u&gt;0) &lt; 10^-5] * [res.economically_unstable ==0];</pre></div>
+<hr><address>Generated on Fri 05-Apr-2013 21:48:31 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

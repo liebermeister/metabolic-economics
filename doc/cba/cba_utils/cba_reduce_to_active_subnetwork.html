@@ -1,0 +1,78 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of cba_reduce_to_active_subnetwork</title>
+  <meta name="keywords" content="cba_reduce_to_active_subnetwork">
+  <meta name="description" content="[v,N_int,Es,network_act,constraints,ind_active,ind_met_active] = cba_reduce_to_active_subnetwork(v,N_int,Es,network,constraints)">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">cba</a> &gt; <a href="index.html">cba_utils</a> &gt; cba_reduce_to_active_subnetwork.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for cba/cba_utils&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+
+<h1>cba_reduce_to_active_subnetwork
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>[v,N_int,Es,network_act,constraints,ind_active,ind_met_active] = cba_reduce_to_active_subnetwork(v,N_int,Es,network,constraints)</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="box"><strong>function [v,N_int,Es,network_act,constraints,ind_active,ind_met_active] = cba_reduce_to_active_subnetwork(v,N_int,Es,network,constraints) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> [v,N_int,Es,network_act,constraints,ind_active,ind_met_active] = cba_reduce_to_active_subnetwork(v,N_int,Es,network,constraints)
+
+ Reduce cba problem with flux mode v to a cba problem on the active subnetwork</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="cba_constraints_reduce_to_active.html" class="code" title="function cba_constraints_act = cba_constraints_reduce_to_active(cba_constraints,ind_active,ind_met_active,network,network_act)">cba_constraints_reduce_to_active</a>	CBA_CONSTRAINTS_REDUCE_TO_ACTIVE - Remove inactive reactions in cba_constraints</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../../matlabicon.gif)">
+<li><a href="../../cba/cba_adjust_fluxes.html" class="code" title="function v_feasible = cba_adjust_fluxes(v, N, external, cba_constraints, network)">cba_adjust_fluxes</a>	CBA_ADJUST_FLUXES - Correct a flux mode to make it economical</li><li><a href="../../cba/cba_feasible_cycle.html" class="code" title="function [isFeasible, C_infeasible, C_cba, ind_non_orthogonal, n_wasteful] = cba_feasible_cycle(v, N, external, cba_constraints, network, flag_test_wasteful, flag_test_v_sign)">cba_feasible_cycle</a>	CBA_FEASIBLE_CYCLE - Check economical flux distribution (non-beneficial cycle criterion)</li><li><a href="../../cba/cba_feasible_lp.html" class="code" title="function [isFeasible, y, dmu] = cba_feasible_lp(v, network, cba_constraints, cba_options)">cba_feasible_lp</a>	CBA_FEASIBLE_LP - Check flux mode for EFA feasibility and choose enzyme costs and thermodynamic forces</li><li><a href="../../cba/cba_reconstruct_model.html" class="code" title="function [network, res, cba_constraints] = cba_reconstruct_model(network,v,mu,cba_constraints,cba_options,y,w,c)">cba_reconstruct_model</a>	CBA_RECONSTRUCT_MODEL - Build model from economical flux mode</li></ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [v,N_int,Es,network_act,constraints,ind_active,ind_met_active] = cba_reduce_to_active_subnetwork(v,N_int,Es,network,constraints)</a>
+0002 
+0003 <span class="comment">% [v,N_int,Es,network_act,constraints,ind_active,ind_met_active] = cba_reduce_to_active_subnetwork(v,N_int,Es,network,constraints)</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% Reduce cba problem with flux mode v to a cba problem on the active subnetwork</span>
+0006 
+0007 eval(default(<span class="string">'Es'</span>,<span class="string">'[]'</span>,<span class="string">'network'</span>,<span class="string">'[]'</span>));
+0008 
+0009 epsilon_v_off = 10^-8;
+0010 
+0011 ind_active = find(abs(v)&gt;epsilon_v_off);
+0012 v          = v(ind_active);
+0013 N_int      = N_int(:,ind_active);
+0014 N_int      = N_int(find(sum(N_int~=0,2)),:);
+0015 
+0016 <span class="keyword">if</span> ~isempty(Es),
+0017   Es = Es(ind_active,:);
+0018 <span class="keyword">end</span>
+0019 
+0020 <span class="keyword">if</span> ~isempty(network),
+0021 <span class="comment">%  network = network_choose(network,1:length(network.metabolites),ind_active);</span>
+0022   [network_act,ind_met_active] = network_choose(network,[],ind_active);
+0023 <span class="keyword">end</span>
+0024 
+0025 <span class="keyword">if</span> exist(<span class="string">'constraints'</span>,<span class="string">'var'</span>), 
+0026   constraints = <a href="cba_constraints_reduce_to_active.html" class="code" title="function cba_constraints_act = cba_constraints_reduce_to_active(cba_constraints,ind_active,ind_met_active,network,network_act)">cba_constraints_reduce_to_active</a>(constraints,ind_active,ind_met_active,network,network_act);
+0027 <span class="keyword">else</span>
+0028   constraints = [];
+0029 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Wed 10-Apr-2013 10:41:29 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>

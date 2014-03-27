@@ -1,0 +1,139 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of cba_homogeneous_investment</title>
+  <meta name="keywords" content="cba_homogeneous_investment">
+  <meta name="description" content="CBA_HOMOGENEOUS_INVESTMENT - Determine economic potentials from the principle of even investments">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">cba</a> &gt; cba_homogeneous_investment.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for cba&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>cba_homogeneous_investment
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>CBA_HOMOGENEOUS_INVESTMENT - Determine economic potentials from the principle of even investments</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [w,delta_w,y,zx] = cba_homogeneous_investment(network,v,cba_constraints,y_given,method) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> CBA_HOMOGENEOUS_INVESTMENT - Determine economic potentials from the principle of even investments
+
+ [w,delta_w,y,zx] = cba_homogeneous_investment(network,v,cba_constraints,y_given,method)
+
+ assumption: balanced distribution of enzyme cost (min = sum(u^2))
+ assumption: benefit arises only from fluxes and external production
+ (not from concentrations)
+
+ y_given (optional) scalar or vector of enzyme investments to be approximated
+
+ if method == 'force', then the vector y_given does not represent the investment y, 
+ but the force y./v; in this case, it has to be explicitly given as a vector
+ THIS OPTION HAS NOT BEEN TESTED YET</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="../cba/cba_utils/cba_update_constraints.html" class="code" title="function cba_constraints = cba_update_constraints(cba_constraints,Next)">cba_update_constraints</a>	cba_constraints = cba_update_constraints(cba_constraints,Next)</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [w,delta_w,y,zx] = cba_homogeneous_investment(network,v,cba_constraints,y_given,method)</a>
+0002 
+0003 <span class="comment">% CBA_HOMOGENEOUS_INVESTMENT - Determine economic potentials from the principle of even investments</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% [w,delta_w,y,zx] = cba_homogeneous_investment(network,v,cba_constraints,y_given,method)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% assumption: balanced distribution of enzyme cost (min = sum(u^2))</span>
+0008 <span class="comment">% assumption: benefit arises only from fluxes and external production</span>
+0009 <span class="comment">% (not from concentrations)</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">% y_given (optional) scalar or vector of enzyme investments to be approximated</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">% if method == 'force', then the vector y_given does not represent the investment y,</span>
+0014 <span class="comment">% but the force y./v; in this case, it has to be explicitly given as a vector</span>
+0015 <span class="comment">% THIS OPTION HAS NOT BEEN TESTED YET</span>
+0016 
+0017 eval(default(<span class="string">'y_given'</span>,<span class="string">'[]'</span>,<span class="string">'method'</span>,<span class="string">'''investment'''</span>));
+0018 
+0019 ind_act = find(v ~=0 );
+0020 ind_int = find(network.external ==0);
+0021 ind_ext = find(network.external ==1);
+0022 
+0023 cba_constraints = <a href="../cba/cba_utils/cba_update_constraints.html" class="code" title="function cba_constraints = cba_update_constraints(cba_constraints,Next)">cba_update_constraints</a>(cba_constraints,network.N(find(network.external),:));
+0024 
+0025 <span class="keyword">switch</span> method, 
+0026   <span class="keyword">case</span> <span class="string">'investment'</span>,
+0027     <span class="comment">%% if investment unknown -&gt; choose according to benefit function</span>
+0028     <span class="keyword">if</span> isempty(y_given), y_given = [cba_constraints.zv' * v ] / length(ind_act); <span class="keyword">end</span>
+0029 
+0030     <span class="comment">%% investment: scalar -&gt;  vector</span>
+0031     <span class="keyword">if</span> length(y_given) == 1, y_given = y_given * double(v~=0); <span class="keyword">end</span>
+0032 
+0033   <span class="keyword">case</span> <span class="string">'force'</span>,
+0034     y_given(ind_act) = y_given(ind_act) ./ v(ind_act);
+0035 <span class="keyword">end</span>
+0036 
+0037 <span class="keyword">if</span> sum(y_given(ind_act) &lt;= 0), error(<span class="string">'Impossible investment'</span>); <span class="keyword">end</span> 
+0038 
+0039 <span class="comment">% rescale benefit function to match the predefined investments</span>
+0040 cba_constraints.z_ext = cba_constraints.z_ext * [sum(y_given)] / [cba_constraints.zv'*v];
+0041 cba_constraints.z_int = cba_constraints.z_int * [sum(y_given)] / [cba_constraints.zv'*v];
+0042 cba_constraints.zv    = cba_constraints.zv    * [sum(y_given)] / [cba_constraints.zv'*v];
+0043 
+0044 v_act        = v(ind_act);
+0045 y_given_act  = y_given(ind_act);
+0046 N_int        = network.N(ind_int,ind_act);
+0047 
+0048 <span class="comment">% quadratic function min = wc' * A * wc + a' * wc</span>
+0049 <span class="comment">% s.t.                 B * wc &lt;= b;</span>
+0050 <span class="comment">%(without constraints the solution would be simply ww_int = - pinv(A) * a;)</span>
+0051 
+0052 A = N_int * diag( [v_act.^2] ./ y_given_act ) * N_int';
+0053 a = N_int * diag( [v_act.^2] ./ y_given_act ) * cba_constraints.zv(ind_act);
+0054 B = - [diag(v_act) * N_int'];
+0055 epsilon = 10^-3;
+0056 nr = length(v_act);
+0057 b = - [epsilon * ones(nr,1) - diag(v_act) * cba_constraints.zv(ind_act)];
+0058 
+0059 <span class="comment">% regularisation</span>
+0060 <span class="keyword">if</span> find(eig(A)==0),
+0061   alpha = 10^-8; A = A + alpha * eye(size(A));
+0062 <span class="keyword">end</span>
+0063 
+0064 opt = optimset(<span class="string">'Display'</span>,<span class="string">'off'</span>,<span class="string">'Algorithm'</span>,<span class="string">'interior-point-convex'</span>);
+0065 w_int = quadprog(A,a,[],[],[],[],[],[],[],opt); 
+0066 
+0067 <span class="keyword">if</span>(sum(double(B * w_int &gt; b))),
+0068   <span class="comment">%% constraints violataed</span>
+0069   opt = optimset(<span class="string">'Algorithm'</span>, <span class="string">'interior-point-convex'</span>,<span class="string">'Display'</span>,<span class="string">'off'</span>);
+0070   w_int = quadprog(A,a,B,b,[],[],[],[],[],opt);
+0071 <span class="keyword">end</span>
+0072   
+0073 w(ind_ext,1) = cba_constraints.z_ext;
+0074 w(ind_int)   = w_int;
+0075 
+0076 delta_w = network.N'*w;
+0077 
+0078 y       = v .* [delta_w + cba_constraints.z_int];
+0079 zx      = zeros(size(w)); 
+0080 zx(ind_ext) = cba_constraints.z_ext;</pre></div>
+<hr><address>Generated on Fri 05-Apr-2013 21:48:31 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
+</body>
+</html>
