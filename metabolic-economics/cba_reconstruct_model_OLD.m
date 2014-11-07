@@ -2,6 +2,8 @@ function [network, res, cba_constraints] = cba_reconstruct_model(network,v,mu,cb
 
 % CBA_RECONSTRUCT_MODEL - Build model from economical flux profile
 %
+% %% OLD VERSION IN WHICH THE equality pc = G' pcm - zc is not yet used
+%
 % [network, res, cba_constraints] = cba_reconstruct_model(network,v,mu,cba_constraints,cba_options,y,w,c)
 %
 % The function determines all model quantitaties and the rate laws 
@@ -25,9 +27,6 @@ function [network, res, cba_constraints] = cba_reconstruct_model(network,v,mu,cb
 %   network          - Model with rate laws (in field 'kinetics');
 %   res              - All results in matlab struct
 %   cba_constraints  - Updated constraints data structure
-
-
-opt = optimset('Display','off','Algorithm','interior-point-convex');
 
 
 % ----------------------------------------------------------------------
@@ -86,17 +85,12 @@ Q_act_predefined(ind_ext_act) = dum(ind_met_active(ind_ext_act));
 % find blocks in link matrix
 
 Nint_act = N_act(find(network_act.external ==0),:); 
-
 [L_act, NR_act, ind_ind_met_act] = reduce_N(Nint_act);
-
 L_act_scaled = diag(1./c_act(ind_int_act)) * L_act * diag(c_act(ind_int_act(ind_ind_met_act)));
-
 L_blocks = matrix_find_blocks(L_act);
-
 ind_dep_met_act = setdiff(1:length(ind_int_act),ind_ind_met_act);
 
 [ni,nj] = size(L_act); 
-
 if ni==nj, 
   display(sprintf('\n  The model does not contain conserved moieties')); 
 else
@@ -105,18 +99,16 @@ end
 
 
 % -------------------------------------------------------------
-% Compound balance equations; precompute necessary information for each metabolite:
-%
+% Investment balance equations; precompute necessary information for each metabolite:
 %   my_Q       
 %   my_beta_M
 %   my_alpha_A      
 %   my_beta_I     
 
-for it = 1:nm_act,
 
+for it = 1:nm_act,
   %% reactions affected by the metabolite
   ind_rea = find(abs(M_act(:,it))+abs(Wplus_act(:,it))+abs(Wminus_act(:,it)));
-
   my_M      =       M_act(ind_rea,it);
   my_Mplus  =  Mplus_act(ind_rea,it);
   my_Mminus = Mminus_act(ind_rea,it);
@@ -151,20 +143,21 @@ for it = 1:nm_act,
     x_prior_std  = [my_Q_ext_std;       ones(length(find([my_M; my_Wplus; my_Wminus])),1)];
   else
     %% internal metabolites
-    my_Q_given   = Q_act_predefined(it);
+    my_Q_given = Q_act_predefined(it);
     x_prior_mean = [my_Q_given;           1/2 * ones(length(find([my_M; my_Wplus; my_Wminus])),1)];
     x_prior_std  = [0.00001 * [1 + my_Q_given]; ones(length(find([my_M; my_Wplus; my_Wminus])),1)];
   end
   
   % thermodynamic part of elasticities
-  my_E_T        = [zeta_act(ind_rea) .* my_Mplus - my_Mminus] ./ [zeta_act(ind_rea)-1];
+  my_E_T = [zeta_act(ind_rea) .* my_Mplus - my_Mminus] ./ [zeta_act(ind_rea)-1];
+
   my_ind_M      = find(my_M);       my_n_M      = length( my_ind_M);
   my_ind_Wplus  = find(my_Wplus);   my_n_Wplus  = length( my_ind_Wplus);
   my_ind_Wminus = find(my_Wminus);  my_n_Wminus = length( my_ind_Wminus);
   
   Aeq = full([1, ...
-              my_y(my_ind_M)'      .* my_M(my_ind_M)',   ...
-            - my_y(my_ind_Wplus)'  .* my_Wplus(my_ind_Wplus)',   ...
+              my_y(my_ind_M)'      .*  my_M(my_ind_M)',   ...
+            - my_y(my_ind_Wplus)'  .*  my_Wplus(my_ind_Wplus)',   ...
               my_y(my_ind_Wminus)' .* my_Wminus(my_ind_Wminus)']);
   
   Beq = my_y' * my_E_T;
@@ -183,23 +176,22 @@ end
 
 
 % -------------------------------------------------------------
-% Initialise variables to be estimated
+% Initialise more
 
 Q_act       = nan * ones(nm_act,1);
-beta_M_act  = zeros(nr_act,nm_act);       beta_M_act(find(M_act)) = nan;
-alpha_A_act = zeros(nr_act,nm_act);  alpha_A_act(find(Wplus_act)) = nan;
+beta_M_act  = zeros(nr_act,nm_act); beta_M_act(find(M_act)) = nan;
+alpha_A_act = zeros(nr_act,nm_act); alpha_A_act(find(Wplus_act)) = nan;
 beta_I_act  = zeros(nr_act,nm_act);  beta_I_act(find(Wminus_act)) = nan;
 
 
 % -------------------------------------------------------------
-% Solve compound balance equation for external metabolites
+% Solve investment balance equation for external metabolites
+
+opt = optimset('Display','off','Algorithm','interior-point-convex');
 
 for it = 1:n_ext_act,
-
   ind   = ind_ext_act(it);
-
   [x_opt,dum,exitflag] = quadprog(diag(rr{ind}.x_prior_std.^-2), -diag(rr{ind}.x_prior_std.^-2)* rr{ind}.x_prior_mean, [],[],rr{ind}.Aeq,rr{ind}.Beq,rr{ind}.x_min,rr{ind}.x_max,[],opt);
-
   if exitflag ~=1, exitflag 
     error('Error in optimisation'); 
   end 
@@ -213,18 +205,16 @@ for it = 1:n_ext_act,
   beta_M_act(find(M_act(:,ind)),ind)      = my_beta_M_act;
   alpha_A_act(find(Wplus_act(:,ind)),ind) = my_alpha_A_act;
   beta_I_act(find(Wminus_act(:,ind)),ind) = my_beta_I_act;
-
 end
 
 
 % -------------------------------------------------------------
-% Solve compound balance equation for internal metabolites
+% Solve investment balance equation for internal metabolites
 % go through blocks of link matrix and solve equations for each block
 % (for instance, blocks with only one entry: independend metabolites
 %  on which no other metabolite depends) 
 
 for it = 1:length(L_blocks),
-
   ind_L_col       = L_blocks{it}.columns;
   ind_L_row       = L_blocks{it}.rows;
   my_L            = L_act(ind_L_row,ind_L_col);
@@ -251,7 +241,6 @@ for it = 1:length(L_blocks),
   my_Beq = my_L_scaled' * my_Beq;
 
   [x_opt,fval,exitflag] = quadprog(diag(my_x_prior_std.^-2), -diag(my_x_prior_std.^-2) * my_x_prior_mean, [],[],my_Aeq,my_Beq,my_x_min,my_x_max,[],opt);
- 
   if exitflag ~=1, error('Error in optimisation'); end 
   
   for itt = 1:length(ind_L_row)
@@ -262,7 +251,7 @@ for it = 1:length(L_blocks),
     my_beta_I_act      = x_opt(1:rr{it_int}.my_n_Wminus); x_opt = x_opt(rr{it_int}.my_n_Wminus+1:end);
   
     Q_act(it_int,1)                               = my_Q; 
-    beta_M_act(find(M_act(:,it_int)),it_int)      = my_beta_M_act;
+    beta_M_act(find(M_act(:,it_int)),it_int)          = my_beta_M_act;
     alpha_A_act(find(Wplus_act(:,it_int)),it_int) = my_alpha_A_act;
     beta_I_act(find(Wminus_act(:,it_int)),it_int) = my_beta_I_act;
   end
@@ -405,7 +394,7 @@ display(sprintf('  Economic balance equation:   mismatch %f',mismatch))
 if mismatch>10^-5,  [ LHS, RHS, LHS-RHS]
 end
 
-% compound balance equation (left hand side, right hand side)
+% investment balance equation (left hand side, right hand side)
 % first external, then internal metabolites 
 % (only metabolites in active subnetwork are considered)
 
