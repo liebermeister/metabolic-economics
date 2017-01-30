@@ -1,0 +1,61 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of cba_economic_state</title>
+  <meta name="keywords" content="cba_economic_state">
+  <meta name="description" content="CBA_ECONOMIC_STATE - Find fluxes, chemical and economic potentials satisfying FBA/EBA/CBA constraints">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2003 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="#">metabolic-economics</a> &gt; cba_economic_state.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for ./metabolic-economics&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>cba_economic_state
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>CBA_ECONOMIC_STATE - Find fluxes, chemical and economic potentials satisfying FBA/EBA/CBA constraints</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function result = cba_economic_state(N, external, cba_constraints, cba_options) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> CBA_ECONOMIC_STATE - Find fluxes, chemical and economic potentials satisfying FBA/EBA/CBA constraints
+
+ result = cba_economic_state(N, external, cba_constraints, cba_options)
+
+ Determine feasible flux vector v, chemical potential differences dmu, 
+ and rate values y under EBA and CBA constraints with either
+  - linear FBA objective (zv' * v) 
+  - sum of squared residuals objective sum([[v-v_mean]/v_std].^2)
+ plus a small Euclidean norm term for regularisation
+
+ Output:
+   result.v      - Flux mode
+   result.dmu    - Chemical potential differences
+   result.y      - (only exists if cba_options.cba_conditions == 'y')
+   result.w      - (only exists if cba_options.cba_conditions == 'w')
+   result.value  - Objective function</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href=".././metabolic-economics/metabolic-economics-utils/cbaf1.html" class="code" title="function f = cbaf1(x,zv,weights)">cbaf1</a>	constraints for EBA and CBA</li><li><a href=".././metabolic-economics/metabolic-economics-utils/cbaf2.html" class="code" title="function [C, Ceq] = cbaf2(x,p)">cbaf2</a>	constraints for EBA and CBA</li><li><a href=".././metabolic-economics/metabolic-economics-utils/cbaf2w.html" class="code" title="function [C, Ceq] = cbaf2w(x,p)">cbaf2w</a>	constraints for EBA and CBA</li><li><a href=".././metabolic-economics/metabolic-economics-utils/cbaf3.html" class="code" title="function f = cbaf3(x,v_mean,v_std)">cbaf3</a>	constraints for EBA and CBA</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+</ul>
+<!-- crossreference -->
+
+
+
+<hr><address>Generated on Mon 30-Jan-2017 18:10:41 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/">m2html</a></strong> &copy; 2003</address>
+</body>
+</html>

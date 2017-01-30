@@ -1,4 +1,4 @@
-function cba_constraints = cba_update_constraints(cba_constraints,Next)
+function cba_constraints = cba_update_constraints(cba_constraints,Next,network)
 
 % cba_constraints = cba_update_constraints(cba_constraints,Next)
 
@@ -22,5 +22,5 @@ end
 
 cba_constraints.zv = zv;
 
-cba_constraints = fba_update_constraints(cba_constraints);
+cba_constraints = fba_update_constraints(cba_constraints,network);
 

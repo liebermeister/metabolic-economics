@@ -42,4 +42,4 @@ if length(cba_constraints.z_ext),
   cba_constraints_act.z_ext = dummi(find(new_external));
 end
 
-cba_constraints_act = cba_update_constraints(cba_constraints_act,network_act.N(find(network_act.external),:));
+cba_constraints_act = cba_update_constraints(cba_constraints_act,network_act.N(find(network_act.external),:),network);

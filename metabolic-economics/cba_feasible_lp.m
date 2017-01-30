@@ -104,10 +104,15 @@ if isFeasible,
   A       = K';
   b       = K' * cc.zv;
 
-  opt = optimset('Display','off');
-  
   %%y_act = lp236a(-c,-G,-h,A,b);
-  [y, fval, exitflag] = linprog(-c, -G, -h, A, b,[],[], [], opt);
+
+  if exist('cplexlp','file'),
+    opt = optimset('Display','off');
+    [y, fval, exitflag] = linprog(-c, -G, -h, A, b,[],[], [], opt);
+  else
+    opt = cplexoptimset('Display','off');
+    [y, fval, exitflag] = cplexlp(-c, -G, -h, A, b,[],[], [], opt);
+  end
 
   if exitflag ~= 1,
     exitflag

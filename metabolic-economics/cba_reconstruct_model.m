@@ -27,8 +27,11 @@ function [network, res, cba_constraints] = cba_reconstruct_model(network,v,mu,cb
 %   cba_constraints  - Updated constraints data structure
 
 
-opt = optimset('Display','off','Algorithm','interior-point-convex');
-
+if exist('cplexqp','file'),
+  opt = cplexoptimset('Display','off');
+else
+  opt = optimset('Display','off','Algorithm','interior-point-convex');
+end
 
 % ----------------------------------------------------------------------
 % Restrict model to active submodel (variable names ..._act) and initialise variables
@@ -198,7 +201,11 @@ for it = 1:n_ext_act,
 
   ind   = ind_ext_act(it);
 
-  [x_opt,dum,exitflag] = quadprog(diag(rr{ind}.x_prior_std.^-2), -diag(rr{ind}.x_prior_std.^-2)* rr{ind}.x_prior_mean, [],[],rr{ind}.Aeq,rr{ind}.Beq,rr{ind}.x_min,rr{ind}.x_max,[],opt);
+  if exist('cplexqp','file'),
+    [x_opt,dum,exitflag] = cplexqp(diag(rr{ind}.x_prior_std.^-2), -diag(rr{ind}.x_prior_std.^-2)* rr{ind}.x_prior_mean, [],[],rr{ind}.Aeq,rr{ind}.Beq,rr{ind}.x_min,rr{ind}.x_max,[],opt);
+  else
+    [x_opt,dum,exitflag] = quadprog(diag(rr{ind}.x_prior_std.^-2), -diag(rr{ind}.x_prior_std.^-2)* rr{ind}.x_prior_mean, [],[],rr{ind}.Aeq,rr{ind}.Beq,rr{ind}.x_min,rr{ind}.x_max,[],opt);
+  end
 
   if exitflag ~=1, exitflag 
     error('Error in optimisation'); 
@@ -250,7 +257,11 @@ for it = 1:length(L_blocks),
   my_Aeq = my_L_scaled' * my_Aeq;
   my_Beq = my_L_scaled' * my_Beq;
 
-  [x_opt,fval,exitflag] = quadprog(diag(my_x_prior_std.^-2), -diag(my_x_prior_std.^-2) * my_x_prior_mean, [],[],my_Aeq,my_Beq,my_x_min,my_x_max,[],opt);
+  if exist('cplexqp','file'),
+    [x_opt,fval,exitflag] = cplexqp(diag(my_x_prior_std.^-2), -diag(my_x_prior_std.^-2) * my_x_prior_mean, [],[],my_Aeq,my_Beq,my_x_min,my_x_max,[],opt);
+  else
+    [x_opt,fval,exitflag] = quadprog(diag(my_x_prior_std.^-2), -diag(my_x_prior_std.^-2) * my_x_prior_mean, [],[],my_Aeq,my_Beq,my_x_min,my_x_max,[],opt);
+  end
  
   if exitflag ~=1, error('Error in optimisation'); end 
   
@@ -503,5 +514,5 @@ res.Rfu = Rfu;
 res.Rfvu = Rfvu;
 res.Rfcu = Rfcu;
 
-cba_constraints.zc    = fc_updated;
+cba_constraints.zc    = zc_updated;
 cba_constraints.Q_ext = Q(find(network.external));

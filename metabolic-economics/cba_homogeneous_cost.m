@@ -24,7 +24,7 @@ ind_act = find(v ~=0 );
 ind_int = find(network.external ==0);
 ind_ext = find(network.external ==1);
 
-cba_constraints = cba_update_constraints(cba_constraints,network.N(find(network.external),:));
+cba_constraints = cba_update_constraints(cba_constraints,network.N(find(network.external),:),network);
 
 switch method, 
   case 'cost',
@@ -69,13 +69,23 @@ if find(eig(A)==0),
   alpha = 10^-8; A = A + alpha * eye(size(A));
 end
 
-opt = optimset('Display','off','Algorithm','interior-point-convex');
-w_int = quadprog(A,a,[],[],[],[],[],[],[],opt); 
+%  if exist('cplexqp','file'),
+%    opt = cplexoptimset('Display','off','Algorithm','interior-point-convex');
+%    w_int = cplexqp(A,a,[],[],[],[],[],[],[],opt); 
+%  else,
+    opt = optimset('Display','off','Algorithm','interior-point-convex');
+    w_int = quadprog(A,a,[],[],[],[],[],[],[],opt); 
+%  end
 
 if(sum(double(B * w_int > b))),
   %% constraints violated
-  opt = optimset('Algorithm', 'interior-point-convex','Display','off');
-  w_int = quadprog(A,a,B,b,[],[],[],[],[],opt);
+  if exist('cplexqp','file'),
+    opt = cplexoptimset('Algorithm', 'interior-point-convex','Display','off');
+    w_int = cplexqp(A,a,B,b,[],[],[],[],[],opt);
+  else
+    opt = optimset('Algorithm', 'interior-point-convex','Display','off');
+    w_int = quadprog(A,a,B,b,[],[],[],[],[],opt);
+  end
 end
 
 

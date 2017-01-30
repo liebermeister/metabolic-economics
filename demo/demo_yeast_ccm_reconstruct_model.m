@@ -80,6 +80,8 @@ clc
 % We declare this by a setting a vector zx with weights 
 % for all external production rates
  
+[nm,nr] = size(network.N);
+
 zx = zeros(nm,1); 
 zx(label_names({'ATP'},network.metabolites)) = 1;
  

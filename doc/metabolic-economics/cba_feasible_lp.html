@@ -1,0 +1,64 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+                "http://www.w3.org/TR/REC-html40/loose.dtd">
+<html>
+<head>
+  <title>Description of cba_feasible_lp</title>
+  <meta name="keywords" content="cba_feasible_lp">
+  <meta name="description" content="CBA_FEASIBLE_LP - Check flux mode for EFA feasibility and choose enzyme costs and thermodynamic forces">
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+  <meta name="generator" content="m2html &copy; 2003 Guillaume Flandin">
+  <meta name="robots" content="index, follow">
+  <link type="text/css" rel="stylesheet" href="../m2html.css">
+</head>
+<body>
+<a name="_top"></a>
+<div><a href="../index.html">Home</a> &gt;  <a href="#">metabolic-economics</a> &gt; cba_feasible_lp.m</div>
+
+<!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
+<td align="right"><a href="index.html">Index for ./metabolic-economics&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+
+<h1>cba_feasible_lp
+</h1>
+
+<h2><a name="_name"></a>PURPOSE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>CBA_FEASIBLE_LP - Check flux mode for EFA feasibility and choose enzyme costs and thermodynamic forces</strong></div>
+
+<h2><a name="_synopsis"></a>SYNOPSIS <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="box"><strong>function [isFeasible, y, dmu] = cba_feasible_lp(v, network, cba_constraints, cba_options) </strong></div>
+
+<h2><a name="_description"></a>DESCRIPTION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre class="comment"> CBA_FEASIBLE_LP - Check flux mode for EFA feasibility and choose enzyme costs and thermodynamic forces
+
+ [isFeasible, y, dmu] = cba_feasible(v, network, cba_constraints, cba_options)
+
+ Test a flux vector v for feasibility (FBA, EBA, CBA) using linear programming
+
+ Consider network with internal stoichiometric matrix N_int:
+  - check if flux mode v is enzyme-optimal 
+  - if so, return a possible vector 'y' of rate costs for this state
+    (y = h_u * u / v), same signs as the rates
+
+ Structure 'cba_constraints' must contains the fields:
+
+ either    zv   : benefits for fluxes 
+ or        z_ext: benefits of network.external metabolites 
+
+ N_tot     : entire stoichiometric matrix; required for EBA test
+
+ cba_options.test_eba : flag: should thermodynamical feasibility be tested as well?</pre></div>
+
+<!-- crossreference -->
+<h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+This function calls:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="cba_feasible_lp.html" class="code" title="function [isFeasible, y, dmu] = cba_feasible_lp(v, network, cba_constraints, cba_options)">cba_feasible_lp</a>	CBA_FEASIBLE_LP - Check flux mode for EFA feasibility and choose enzyme costs and thermodynamic forces</li><li><a href=".././metabolic-economics/metabolic-economics-utils/cba_reduce_to_active_subnetwork.html" class="code" title="function [v,N_int,Es,network_act,constraints,ind_active,ind_met_active] = cba_reduce_to_active_subnetwork(v,N_int,Es,network,constraints)">cba_reduce_to_active_subnetwork</a>	[v,N_int,Es,network_act,constraints,ind_active,ind_met_active] = cba_reduce_to_active_subnetwork(v,N_int,Es,network,constraints)</li><li><a href=".././metabolic-economics/metabolic-economics-utils/cba_update_constraints.html" class="code" title="function cba_constraints = cba_update_constraints(cba_constraints,Next,network)">cba_update_constraints</a>	cba_constraints = cba_update_constraints(cba_constraints,Next)</li></ul>
+This function is called by:
+<ul style="list-style-image:url(../matlabicon.gif)">
+<li><a href="cba_feasible_lp.html" class="code" title="function [isFeasible, y, dmu] = cba_feasible_lp(v, network, cba_constraints, cba_options)">cba_feasible_lp</a>	CBA_FEASIBLE_LP - Check flux mode for EFA feasibility and choose enzyme costs and thermodynamic forces</li></ul>
+<!-- crossreference -->
+
+
+
+<hr><address>Generated on Mon 30-Jan-2017 18:10:41 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/">m2html</a></strong> &copy; 2003</address>
+</body>
+</html>
