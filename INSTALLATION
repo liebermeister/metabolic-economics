@@ -10,7 +10,7 @@ INSTALLATION
   1. Unpack the files
   2. Include the subdirectory 'cba' into your Matlab path
   3. Make sure that the following toolboxes are installed:
-      o Metabolic Network Toolbox  (https://github.com/liebermeister/mnt)
+      o Metabolic Network Toolbox  (https://github.com/liebermeister/metabolic-network-toolbox)
       o SBML Toolbox               (http://sbml.org/Software/SBMLToolbox)
       o SBtab toolbox              (https://github.com/liebermeister/sbtab-matlab)
       o efmtool Toolbox            (http://www.csb.ethz.ch/tools/efmtool)
@@ -22,7 +22,7 @@ REQUIREMENTS
 
   They also require
 
-    Metabolic Network Toolbox - (https://github.com/liebermeister/mnt)
+    Metabolic Network Toolbox - (https://github.com/liebermeister/metabolic-network-toolbox)
     SBMLtoolbox    - SBML import / export  (see http://sbml.org/Software/SBMLToolbox)
     SBtab toolbox  - SBtab format (https://github.com/liebermeister/sbtab-matlab)
     efmtool        - Elementary flux modes (see http://www.csb.ethz.ch/tools/efmtool)

@@ -42,7 +42,7 @@
 %
 %
 % MATLAB Toolbox required:
-%   Metabolic Network Toolbox (https://github.com/wolframliebermeister/mnt)
+%   Metabolic Network Toolbox (https://github.com/wolframliebermeister/metabolic-network-toolbox)
 %   SBMLtoolbox    - SBML import / export  (see http://sbml.org/Software/SBMLToolbox)
 %   SBtab toolbox  - SBtab format (https://github.com/wolframliebermeister/sbtab-matlab)
 %
