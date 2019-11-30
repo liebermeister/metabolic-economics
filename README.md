@@ -29,12 +29,10 @@ This package is released under the [GNU General Public License](LICENSE).
 Please contact [Wolfram Liebermeister](wolfram.liebermeister@gmail.com) with any questions or comments.
 
 ## References
-Liebermeister W. (2018), *Optimal metabolic states in cells* [biorXiv doi:10.1101/483867](biorXiv doi:10.1101/483867)
+Liebermeister W. (2018), *Optimal metabolic states in cells*, [biorXiv doi:10.1101/483867](https://www.biorxiv.org/content/10.1101/483867v1)
 
-Liebermeister W. (2018), *The value structure of metabolic states*, [biorXiv doi:10.1101/483891](biorXiv doi:10.1101/483891)
+Liebermeister W. (2018), *The value structure of metabolic states*, [biorXiv doi:10.1101/483891](https://www.biorxiv.org/content/10.1101/483891v1)
 
-Liebermeister W. (2014), *Enzyme economy in metabolic networks*,
-[arXiv:1404.5252](arXiv:1404.5252)
+Liebermeister W. (2014), *Enzyme economy in metabolic networks*, [arXiv:1404.5252](https://arxiv.org/abs/1404.5252)
 
-Liebermeister W. (2014), *How enzyme economy shapes metabolic fluxes*,
-[arXiv:1404.5072](arXiv:1404.5072)
+Liebermeister W. (2014), *How enzyme economy shapes metabolic fluxes*, [arXiv:1404.5072](https://arxiv.org/abs/1404.5072)
