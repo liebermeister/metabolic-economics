@@ -6,16 +6,16 @@
   <meta name="keywords" content="cba_flux2model_mrl_constraint">
   <meta name="description" content="[g, geq, Ec_un, beta_M, beta_A, beta_I, CJ] = cba_flux2model_mrl_constraint(beta_M_vector,Mplus,Mminus,Wplus,Wminus,E_sc_T,v,c,N,ind_ext,cba_constraints,kinetic_law)">
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-  <meta name="generator" content="m2html &copy; 2003 Guillaume Flandin">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
   <meta name="robots" content="index, follow">
   <link type="text/css" rel="stylesheet" href="../../m2html.css">
 </head>
 <body>
 <a name="_top"></a>
-<div><a href="../../index.html">Home</a> &gt;  <a href="#">metabolic-economics</a> &gt; <a href="#">metabolic-economics-utils</a> &gt; cba_flux2model_mrl_constraint.m</div>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">metabolic-economics</a> &gt; <a href="index.html">metabolic-economics-utils</a> &gt; cba_flux2model_mrl_constraint.m</div>
 
 <!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
-<td align="right"><a href="index.html">Index for ./metabolic-economics/metabolic-economics-utils&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+<td align="right"><a href="index.html">Index for metabolic-economics/metabolic-economics-utils&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
 
 <h1>cba_flux2model_mrl_constraint
 </h1>
@@ -41,6 +41,87 @@ This function is called by:
 
 
 
-<hr><address>Generated on Mon 30-Jan-2017 18:10:41 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/">m2html</a></strong> &copy; 2003</address>
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [g, geq, Ec_un, beta_M, beta_A, beta_I, CJ] = cba_flux2model_mrl_constraint(beta_M_vector,Mplus,Mminus,Wplus,Wminus,E_sc_T,v,c,N,ind_ext,cba_constraints,kinetic_law)</a>
+0002 
+0003 <span class="comment">% [g, geq, Ec_un, beta_M, beta_A, beta_I, CJ] = cba_flux2model_mrl_constraint(beta_M_vector,Mplus,Mminus,Wplus,Wminus,E_sc_T,v,c,N,ind_ext,cba_constraints,kinetic_law)</span>
+0004 
+0005 [nr, nm] = size(Mplus);
+0006 
+0007 M                = Mplus + Mminus;
+0008 alpha_M          = zeros(size(M)); 
+0009 alpha_A          = zeros(size(M)); 
+0010 alpha_I          = zeros(size(M)); 
+0011 beta_M           = zeros(size(M)); 
+0012 beta_A           = zeros(size(M)); 
+0013 beta_I           = zeros(size(M)); 
+0014 
+0015 ind_KM = find(M);
+0016 ind_KA = find(Wplus);
+0017 ind_KI = find(Wminus);
+0018 n_KM = length(ind_KM);
+0019 n_KA = length(ind_KA);
+0020 n_KI = length(ind_KI);
+0021 
+0022 alpha_M(ind_KM) = 1-beta_M_vector(1:n_KM);
+0023 beta_M( ind_KM) =   beta_M_vector(1:n_KM);
+0024 
+0025 alpha_A(ind_KA) = 1-beta_M_vector(n_KM + [1:n_KA]);
+0026 beta_A( ind_KA) =   beta_M_vector(n_KM + [1:n_KA]);
+0027 
+0028 alpha_I(ind_KI) = 1-beta_M_vector(n_KM + n_KA + [1:n_KI]);
+0029 beta_I( ind_KI) =   beta_M_vector(n_KM + n_KA + [1:n_KI]);
+0030 
+0031 <span class="comment">% -----------------------------------------------------------</span>
+0032 <span class="comment">% copy from compute_modular_elasticities</span>
+0033 
+0034 <span class="keyword">switch</span> kinetic_law,  
+0035 
+0036   <span class="keyword">case</span> {<span class="string">'cs'</span>,<span class="string">'ms'</span>}
+0037     alpha_M( find((Mplus==0).*(Mminus==0)) ) = 1;  <span class="comment">% irrelevant elements</span>
+0038     psi_plus    = prod((1./alpha_M) .^ Mplus, 2);
+0039     psi_minus   = prod((1./alpha_M) .^ Mminus,2);
+0040 
+0041   <span class="keyword">case</span> {<span class="string">'ds'</span>,<span class="string">'fd'</span>},
+0042     alpha_M( find((Mplus==0).*(Mminus==0)) ) = 1/2; <span class="comment">% irrelevant elements</span>
+0043     theta_plus  = prod((1./alpha_M-1) .^ Mplus, 2);
+0044     theta_minus = prod((1./alpha_M-1) .^ Mminus,2);
+0045 
+0046   <span class="keyword">otherwise</span> error(<span class="string">'Unknown kinetic law'</span>);
+0047 
+0048 <span class="keyword">end</span>
+0049 
+0050 <span class="keyword">switch</span> kinetic_law,  
+0051   <span class="keyword">case</span> <span class="string">'cs'</span>,
+0052     D               = psi_plus + psi_minus - 1;
+0053     E_sc_Dc_kinetic = diag(1./D) * beta_M .* [diag(psi_plus) * Mplus + diag(psi_minus) * Mminus];
+0054   <span class="keyword">case</span> <span class="string">'ms'</span>,
+0055     D               = psi_plus .* psi_minus;
+0056     E_sc_Dc_kinetic = beta_M   .* [ Mplus + Mminus ];
+0057   <span class="keyword">case</span> <span class="string">'ds'</span>,
+0058     D               = theta_plus + theta_minus + 1;
+0059     E_sc_Dc_kinetic = diag(1./D) * [ diag(theta_plus) * Mplus + diag(theta_minus) * Mminus ];
+0060   <span class="keyword">case</span> <span class="string">'rp'</span>,
+0061     D               = ones(nm,1);
+0062     E_sc_Dc_kinetic = zeros(nr,nm);
+0063   <span class="keyword">case</span> <span class="string">'fd'</span>,
+0064     D               = sqrt(theta_plus .* theta_minus);
+0065     E_sc_Dc_kinetic = 1/2 * [ Mplus + Mminus ];
+0066 <span class="keyword">end</span>
+0067 
+0068 E_sc_c_regulation = alpha_A .* Wplus - beta_I .* Wminus;
+0069 
+0070 <span class="comment">% -----------------------------------------------------------</span>
+0071 
+0072 Ec_un = diag(v) * [E_sc_T - E_sc_Dc_kinetic + E_sc_c_regulation] * diag(1./c);
+0073 
+0074 ind_int = setdiff(1:nr,ind_ext);
+0075 N_int = N(ind_int,:);
+0076 E_int = Ec_un(:,ind_int);
+0077 CJ    = eye(nr) - E_int * pinv(N_int*E_int) * N_int;
+0078 
+0079 g   = - diag(sign(v)) * CJ' * cba_constraints.zv + cba_constraints.zx_scaled_min;
+0080 geq = [];</pre></div>
+<hr><address>Generated on Tue 08-Oct-2019 15:38:31 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
 </body>
 </html>

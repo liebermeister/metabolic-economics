@@ -6,16 +6,16 @@
   <meta name="keywords" content="cba_check_model">
   <meta name="description" content="CBA_CHECK_MODEL - Check kinetic model for being in an enzyme-optimal state">
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-  <meta name="generator" content="m2html &copy; 2003 Guillaume Flandin">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
   <meta name="robots" content="index, follow">
   <link type="text/css" rel="stylesheet" href="../m2html.css">
 </head>
 <body>
 <a name="_top"></a>
-<div><a href="../index.html">Home</a> &gt;  <a href="#">metabolic-economics</a> &gt; cba_check_model.m</div>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">metabolic-economics</a> &gt; cba_check_model.m</div>
 
 <!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
-<td align="right"><a href="index.html">Index for ./metabolic-economics&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+<td align="right"><a href="index.html">Index for metabolic-economics&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
 
 <h1>cba_check_model
 </h1>
@@ -64,6 +64,105 @@ This function is called by:
 
 
 
-<hr><address>Generated on Mon 30-Jan-2017 18:10:41 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/">m2html</a></strong> &copy; 2003</address>
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [isFeasible, res] = cba_check_model(network, c, u, v, cba_constraints)</a>
+0002 
+0003 <span class="comment">% CBA_CHECK_MODEL - Check kinetic model for being in an enzyme-optimal state</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% [isFeasible,res] = cba_check_model(network,c,u,v,cba_constraints)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% Check a kinetic model for a feasible stationary state</span>
+0008 <span class="comment">%</span>
+0009 <span class="comment">% 'res' contains various kinds of information about the state:</span>
+0010 <span class="comment">%</span>
+0011 <span class="comment">%   res.c_adjusted</span>
+0012 <span class="comment">%   res.v_adjusted</span>
+0013 <span class="comment">%   res.u_adjusted</span>
+0014 <span class="comment">%   res.c_mismatch_norm</span>
+0015 <span class="comment">%   res.v_mismatch_norm</span>
+0016 <span class="comment">%   res.mismatch_v_constraints</span>
+0017 <span class="comment">%   res.stationarity_mismatch_norm</span>
+0018 <span class="comment">%   res.flux_sign_mistakes</span>
+0019 <span class="comment">%   res.dynamically_instable</span>
+0020 <span class="comment">%   res.negative_control</span>
+0021 <span class="comment">%   res.R_f_u</span>
+0022 <span class="comment">%   res.economically_unstable</span>
+0023 <span class="comment">%   res.fitness_gradient</span>
+0024 <span class="comment">%   res.fitness_hessian</span>
+0025 <span class="comment">%   res.benefit_hessian</span>
+0026 <span class="comment">%   res.cost_hessian</span>
+0027 
+0028 
+0029 <span class="comment">% stationarity</span>
+0030 
+0031 <span class="comment">% set small enzyme levels to zero</span>
+0032 
+0033 u(u/median(u) &lt; 0.001) = 0;
+0034 
+0035 [nm,nr] = size(network.N);
+0036 
+0037 network.kinetics.u = u;
+0038 
+0039 [c_st,v_st]    = network_steady_state(network,c);
+0040 
+0041 res.c_adjusted = c_st;
+0042 res.v_adjusted = v_st;
+0043 res.u_adjusted = u;
+0044 
+0045 res.c_mismatch_norm = norm(c_st - c)/norm(c);
+0046 res.v_mismatch_norm = norm(v_st - v)/norm(v);
+0047 
+0048 res.mismatch_v_constraints     = sum(v&lt;cba_constraints.v_min) + sum(v&gt;cba_constraints.v_max);
+0049 res.stationarity_mismatch_norm = norm(network.N(network.external==0,:) * v_st);
+0050 res.flux_sign_mistakes         = find([v_st~=0] .*  [sign(v_st .* [ log(network.kinetics.Keq) - network.N'*log(c_st)]) ==-1]);
+0051 
+0052 R   = basic_control_analysis(network,c_st);
+0053 RJu = R.RJ(:,1:nr);
+0054 
+0055 res.dynamically_instable =  sum(real(eig(R.M))&gt;0)&gt;0;
+0056 
+0057 R_f_u =  cba_constraints.zv' * RJu;
+0058 R_f_u(abs(R_f_u)&lt;0.001*median(abs(R_f_u))) = 0;
+0059 
+0060 res.negative_control = find([u~=0].*R_f_u' &lt;0);
+0061 
+0062 <span class="keyword">if</span> res.negative_control,
+0063   res.R_f_u = R_f_u;
+0064 <span class="keyword">end</span>
+0065 
+0066 <span class="keyword">if</span> length(res.negative_control),
+0067   figure(10); netgraph_concentrations(network,[], [u~=0].*R_f_u',1); title(<span class="string">'Fitness/enzyme response coefficients'</span>);
+0068 <span class="keyword">end</span>
+0069 
+0070 [f_cost, grad_cost, H_cost] = feval(cba_constraints.fitness_options.cost_function, u, cba_constraints.fitness_options);
+0071 
+0072 fitness_gradient = [cba_constraints.zv' * RJu] - grad_cost';
+0073 res.fitness_gradient_active_norm = norm(fitness_gradient .* [u ~=0]');
+0074 
+0075 [Ec,Ep,parameters,Ecc,Ecp,Epp,p] = elasticities(network,c);
+0076 [CJ, CS] = control_coefficients(network.N, Ec, network.external);
+0077 [RS,RJ,RS2,RJ2] = response_coefficients(CS,Ec,Ep,Ecc,Ecp,Epp);
+0078 
+0079 H_benefit  = squeeze(tensor_product(cba_constraints.zv', RJ2(:,1:nr,1:nr)));
+0080 H_fitness  = H_benefit - H_cost;
+0081 
+0082 res.economically_unstable = sum(eig(H_fitness(find(u&gt;0),find(u&gt;0)))&gt;0)&gt;0;
+0083 
+0084 res.fitness_gradient = fitness_gradient;
+0085 res.fitness_hessian  = H_fitness;
+0086 res.benefit_hessian  = H_benefit;
+0087 res.cost_hessian     = H_cost;
+0088 
+0089 isFeasible = <span class="keyword">...</span>
+0090     [res.c_mismatch_norm^2/nm &lt;10^-5] <span class="keyword">...</span>
+0091     * [res.v_mismatch_norm^2/nr &lt;10^-5] <span class="keyword">...</span>
+0092     * [res.stationarity_mismatch_norm^2/nr &lt;10^-5] <span class="keyword">...</span>
+0093     * [res.mismatch_v_constraints == 0] <span class="keyword">...</span>
+0094     * [length(res.flux_sign_mistakes) == 0] <span class="keyword">...</span>
+0095     * [res.dynamically_instable == 0] <span class="keyword">...</span>
+0096     * [length(res.negative_control) == 0] <span class="keyword">...</span>
+0097     * [res.fitness_gradient_active_norm^2/sum(u&gt;0) &lt; 10^-5] <span class="keyword">...</span>
+0098     * [res.economically_unstable == 0];</pre></div>
+<hr><address>Generated on Tue 08-Oct-2019 15:38:31 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
 </body>
 </html>

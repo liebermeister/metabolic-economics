@@ -6,16 +6,16 @@
   <meta name="keywords" content="cba_reconstruct_model">
   <meta name="description" content="CBA_RECONSTRUCT_MODEL - Build model from economical flux profile">
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-  <meta name="generator" content="m2html &copy; 2003 Guillaume Flandin">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
   <meta name="robots" content="index, follow">
   <link type="text/css" rel="stylesheet" href="../m2html.css">
 </head>
 <body>
 <a name="_top"></a>
-<div><a href="../index.html">Home</a> &gt;  <a href="#">metabolic-economics</a> &gt; cba_reconstruct_model.m</div>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">metabolic-economics</a> &gt; cba_reconstruct_model.m</div>
 
 <!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
-<td align="right"><a href="index.html">Index for ./metabolic-economics&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+<td align="right"><a href="index.html">Index for metabolic-economics&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
 
 <h1>cba_reconstruct_model
 </h1>
@@ -57,14 +57,533 @@
 <h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
 This function calls:
 <ul style="list-style-image:url(../matlabicon.gif)">
-<li><a href=".././metabolic-economics/metabolic-economics-utils/cba_reduce_to_active_subnetwork.html" class="code" title="function [v,N_int,Es,network_act,constraints,ind_active,ind_met_active] = cba_reduce_to_active_subnetwork(v,N_int,Es,network,constraints)">cba_reduce_to_active_subnetwork</a>	[v,N_int,Es,network_act,constraints,ind_active,ind_met_active] = cba_reduce_to_active_subnetwork(v,N_int,Es,network,constraints)</li></ul>
+<li><a href="../metabolic-economics/metabolic-economics-utils/cba_reduce_to_active_subnetwork.html" class="code" title="function [v,N_int,Es,network_act,constraints,ind_active,ind_met_active] = cba_reduce_to_active_subnetwork(v,N_int,Es,network,constraints)">cba_reduce_to_active_subnetwork</a>	[v,N_int,Es,network_act,constraints,ind_active,ind_met_active] = cba_reduce_to_active_subnetwork(v,N_int,Es,network,constraints)</li></ul>
 This function is called by:
 <ul style="list-style-image:url(../matlabicon.gif)">
-<li><a href=".././demo/demo_yeast_ccm_reconstruct_model.html" class="code" title="">demo_yeast_ccm_reconstruct_model</a>	DEMO_YEAST_CCM_RECONSTUCT_MODEL - Demo script for reconstruction of enzyme-balanced models</li></ul>
+<li><a href="../demo/demo_yeast_ccm_reconstruct_model.html" class="code" title="">demo_yeast_ccm_reconstruct_model</a>	DEMO_YEAST_CCM_RECONSTUCT_MODEL - Demo script for reconstruction of enzyme-balanced models</li></ul>
 <!-- crossreference -->
 
 
 
-<hr><address>Generated on Mon 30-Jan-2017 18:10:41 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/">m2html</a></strong> &copy; 2003</address>
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [network, res, cba_constraints] = cba_reconstruct_model(network,v,mu,cba_constraints,cba_options,y,w,c)</a>
+0002 
+0003 <span class="comment">% CBA_RECONSTRUCT_MODEL - Build model from economical flux profile</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% [network, res, cba_constraints] = cba_reconstruct_model(network,v,mu,cba_constraints,cba_options,y,w,c)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% The function determines all model quantitaties and the rate laws</span>
+0008 <span class="comment">% based on an economical flux mode.</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% Important: it is assumed that all enzymes in the model are controllable</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">%</span>
+0013 <span class="comment">% Input</span>
+0014 <span class="comment">%   network  - Network structure (as in Metabolic Network Toolbox)</span>
+0015 <span class="comment">%   v        - Precalculated metabolic fluxes</span>
+0016 <span class="comment">%   w        - Precalculated economic potentials</span>
+0017 <span class="comment">%   y        - Precalculated enzyme costs</span>
+0018 <span class="comment">%   mu       - Precalculated chemical potentials</span>
+0019 <span class="comment">%   c        - Precalculated metabolite levels</span>
+0020 <span class="comment">%</span>
+0021 <span class="comment">%   For the inputs cba_constraints and cba_options, see cba_default_options</span>
+0022 <span class="comment">%   y and w together must satisfy the economic balance equation</span>
+0023 <span class="comment">%</span>
+0024 <span class="comment">% Output</span>
+0025 <span class="comment">%   network          - Model with rate laws (in field 'kinetics');</span>
+0026 <span class="comment">%   res              - All results in matlab struct</span>
+0027 <span class="comment">%   cba_constraints  - Updated constraints data structure</span>
+0028 
+0029 
+0030 <span class="keyword">if</span> exist(<span class="string">'cplexqp'</span>,<span class="string">'file'</span>),
+0031   opt = cplexoptimset(<span class="string">'Display'</span>,<span class="string">'off'</span>);
+0032 <span class="keyword">else</span>
+0033   opt = optimset(<span class="string">'Display'</span>,<span class="string">'off'</span>,<span class="string">'Algorithm'</span>,<span class="string">'interior-point-convex'</span>);
+0034 <span class="keyword">end</span>
+0035 
+0036 <span class="comment">% ----------------------------------------------------------------------</span>
+0037 <span class="comment">% Restrict model to active submodel (variable names ..._act) and initialise variables</span>
+0038 
+0039 <span class="comment">% Q_ext is upposed to have length = #external metab  (or 0, if omitted)</span>
+0040 
+0041 <span class="keyword">if</span> isempty(cba_constraints.Q_ext), 
+0042   Q_ext = nan * ones(sum(network.external),1); 
+0043 <span class="keyword">else</span>, 
+0044   Q_ext = cba_constraints.Q_ext;
+0045 <span class="keyword">end</span> 
+0046 
+0047 <span class="keyword">if</span> isfield(network,<span class="string">'kinetics'</span>), network = rmfield(network,<span class="string">'kinetics'</span>); <span class="keyword">end</span>
+0048 
+0049 [nm,nr] = size(network.N);
+0050 ind_int = find(network.external==0);
+0051 ind_ext = find(network.external==1);
+0052 
+0053 [v_act, N_int_act, Es_act, network_act, cba_constraints_act, ind_active, ind_met_active] = <a href="../metabolic-economics/metabolic-economics-utils/cba_reduce_to_active_subnetwork.html" class="code" title="function [v,N_int,Es,network_act,constraints,ind_active,ind_met_active] = cba_reduce_to_active_subnetwork(v,N_int,Es,network,constraints)">cba_reduce_to_active_subnetwork</a>(v,network.N(ind_int,:),[],network,cba_constraints);
+0054 
+0055 ind_ext_act = find(network_act.external);
+0056 ind_int_act = find(network_act.external==0);
+0057 mu_act      = mu(ind_met_active);
+0058 y_act       = y(ind_active);
+0059 w_act       = w(ind_met_active);
+0060 c_act       = c(ind_met_active);
+0061 N_act       = network_act.N;
+0062 W_act       = network_act.regulation_matrix;
+0063 
+0064 <span class="comment">% assume hill coefficients = 1 (already implicitly assumed in 'make_structure_matrices')</span>
+0065 [Mplus_act, Mminus_act, Wplus_act, Wminus_act, nm_act, nr_act] = make_structure_matrices(N_act,W_act,ind_ext_act);
+0066 M_act       = Mplus_act + Mminus_act;
+0067 h_act       = ones(nr_act,1); 
+0068 n_ext_act   = sum(network_act.external);
+0069 A_act       = - N_act'* mu_act;
+0070 zeta_act    = exp(h_act .* A_act / RT);
+0071 hu_act      = cba_constraints.hu(ind_active);
+0072 
+0073 <span class="comment">% note that here, the vector zc refers to all (not only internal)</span>
+0074 <span class="comment">% metabolites, but the entries for external metabolites are ignored</span>
+0075 
+0076 <span class="keyword">if</span> length(cba_constraints_act.zc),
+0077   zc_act = cba_constraints_act.zc(ind_met_active);
+0078 <span class="keyword">else</span>,
+0079   zc_act = zeros(size(c_act));
+0080 <span class="keyword">end</span>
+0081 
+0082 Q_act_predefined = - c_act .* zc_act;
+0083 dum              = nan * ones(nm,1);
+0084 dum(find(network.external)) = Q_ext;
+0085 Q_act_predefined(ind_ext_act) = dum(ind_met_active(ind_ext_act)); 
+0086 
+0087 
+0088 <span class="comment">% ------------------------------------</span>
+0089 <span class="comment">% find blocks in link matrix</span>
+0090 
+0091 Nint_act = N_act(find(network_act.external ==0),:); 
+0092 
+0093 [L_act, NR_act, ind_ind_met_act] = reduce_N(Nint_act);
+0094 
+0095 L_act_scaled = diag(1./c_act(ind_int_act)) * L_act * diag(c_act(ind_int_act(ind_ind_met_act)));
+0096 
+0097 L_blocks = matrix_find_blocks(L_act);
+0098 
+0099 ind_dep_met_act = setdiff(1:length(ind_int_act),ind_ind_met_act);
+0100 
+0101 [ni,nj] = size(L_act); 
+0102 
+0103 <span class="keyword">if</span> ni==nj, 
+0104   display(sprintf(<span class="string">'\n  The model does not contain conserved moieties'</span>)); 
+0105 <span class="keyword">else</span>
+0106   display(<span class="string">'  The model contains conserved moieties'</span>); 
+0107 <span class="keyword">end</span>
+0108 
+0109 
+0110 <span class="comment">% -------------------------------------------------------------</span>
+0111 <span class="comment">% Compound balance equations; precompute necessary information for each metabolite:</span>
+0112 <span class="comment">%</span>
+0113 <span class="comment">%   my_Q</span>
+0114 <span class="comment">%   my_beta_M</span>
+0115 <span class="comment">%   my_alpha_A</span>
+0116 <span class="comment">%   my_beta_I</span>
+0117 
+0118 <span class="keyword">for</span> it = 1:nm_act,
+0119 
+0120   <span class="comment">%% reactions affected by the metabolite</span>
+0121   ind_rea = find(abs(M_act(:,it))+abs(Wplus_act(:,it))+abs(Wminus_act(:,it)));
+0122 
+0123   my_M      =       M_act(ind_rea,it);
+0124   my_Mplus  =  Mplus_act(ind_rea,it);
+0125   my_Mminus = Mminus_act(ind_rea,it);
+0126   my_Wplus  =  Wplus_act(ind_rea,it);
+0127   my_Wminus = Wminus_act(ind_rea,it);
+0128   my_y      =      y_act(ind_rea);
+0129   
+0130   <span class="comment">% sign constraint for Q // set sign for external metabolites</span>
+0131   Q_min = -inf;  
+0132   Q_max =  inf;  
+0133   
+0134   <span class="comment">%% reactions must not be completely switched off or saturated: 0.05 &lt; beta &lt; 0.95</span>
+0135   <span class="comment">%% CHECK THE SAME FOR ALLOSTERIC REGLUATION:: FIX !!!!!!!!!!!!!!!!!!!!!!!!!!!!!</span>
+0136   <span class="comment">%% ALSO FURTHER BELOW!!!</span>
+0137 
+0138   x_min = [ Q_min; 0.05 * ones(length(find([my_M; my_Wplus; my_Wminus])),1)];
+0139   x_max = [ Q_max; 0.95 * ones(length(find([my_M; my_Wplus; my_Wminus])),1)];
+0140   
+0141   <span class="keyword">if</span> network_act.external(it),
+0142     <span class="comment">%% external metabolites</span>
+0143     <span class="keyword">if</span> isfinite(Q_act_predefined(it)),
+0144       my_Q_ext     = Q_act_predefined(it);
+0145       my_Q_ext_std = 0.1*abs(my_Q_ext);
+0146     <span class="keyword">else</span>
+0147       net_prod  = N_act(it,:) * v_act;
+0148       my_Q_ext = 0;
+0149       <span class="keyword">if</span> net_prod &lt; 0, my_Q_ext =  1; <span class="keyword">end</span>
+0150       <span class="keyword">if</span> net_prod &gt; 0, my_Q_ext = -1; <span class="keyword">end</span>
+0151       my_Q_ext_std = 1; 
+0152     <span class="keyword">end</span>
+0153     x_prior_mean = [my_Q_ext;     1/2 * ones(length(find([my_M; my_Wplus; my_Wminus])),1)];
+0154     x_prior_std  = [my_Q_ext_std;       ones(length(find([my_M; my_Wplus; my_Wminus])),1)];
+0155   <span class="keyword">else</span>
+0156     <span class="comment">%% internal metabolites</span>
+0157     my_Q_given   = Q_act_predefined(it);
+0158     x_prior_mean = [my_Q_given;           1/2 * ones(length(find([my_M; my_Wplus; my_Wminus])),1)];
+0159     x_prior_std  = [0.00001 * [1 + my_Q_given]; ones(length(find([my_M; my_Wplus; my_Wminus])),1)];
+0160   <span class="keyword">end</span>
+0161   
+0162   <span class="comment">% thermodynamic part of elasticities</span>
+0163   my_E_T        = [zeta_act(ind_rea) .* my_Mplus - my_Mminus] ./ [zeta_act(ind_rea)-1];
+0164   my_ind_M      = find(my_M);       my_n_M      = length( my_ind_M);
+0165   my_ind_Wplus  = find(my_Wplus);   my_n_Wplus  = length( my_ind_Wplus);
+0166   my_ind_Wminus = find(my_Wminus);  my_n_Wminus = length( my_ind_Wminus);
+0167   
+0168   Aeq = full([1, <span class="keyword">...</span>
+0169               my_y(my_ind_M)'      .* my_M(my_ind_M)',   <span class="keyword">...</span>
+0170             - my_y(my_ind_Wplus)'  .* my_Wplus(my_ind_Wplus)',   <span class="keyword">...</span>
+0171               my_y(my_ind_Wminus)' .* my_Wminus(my_ind_Wminus)']);
+0172   
+0173   Beq = my_y' * my_E_T;
+0174   
+0175   rr{it}.Aeq          = Aeq;
+0176   rr{it}.Beq          = Beq;
+0177   rr{it}.x_min        = x_min;
+0178   rr{it}.x_max        = x_max;
+0179   rr{it}.x_prior_mean = x_prior_mean;
+0180   rr{it}.x_prior_std  = x_prior_std;
+0181   rr{it}.my_n_M       = my_n_M  ;
+0182   rr{it}.my_n_Wplus   = my_n_Wplus  ;
+0183   rr{it}.my_n_Wminus  = my_n_Wminus ;
+0184   
+0185 <span class="keyword">end</span>
+0186 
+0187 
+0188 <span class="comment">% -------------------------------------------------------------</span>
+0189 <span class="comment">% Initialise variables to be estimated</span>
+0190 
+0191 Q_act       = nan * ones(nm_act,1);
+0192 beta_M_act  = zeros(nr_act,nm_act);       beta_M_act(find(M_act)) = nan;
+0193 alpha_A_act = zeros(nr_act,nm_act);  alpha_A_act(find(Wplus_act)) = nan;
+0194 beta_I_act  = zeros(nr_act,nm_act);  beta_I_act(find(Wminus_act)) = nan;
+0195 
+0196 
+0197 <span class="comment">% -------------------------------------------------------------</span>
+0198 <span class="comment">% Solve compound balance equation for external metabolites</span>
+0199 
+0200 <span class="keyword">for</span> it = 1:n_ext_act,
+0201 
+0202   ind   = ind_ext_act(it);
+0203 
+0204   <span class="keyword">if</span> exist(<span class="string">'cplexqp'</span>,<span class="string">'file'</span>),
+0205     [x_opt,dum,exitflag] = cplexqp(diag(rr{ind}.x_prior_std.^-2), -diag(rr{ind}.x_prior_std.^-2)* rr{ind}.x_prior_mean, [],[],rr{ind}.Aeq,rr{ind}.Beq,rr{ind}.x_min,rr{ind}.x_max,[],opt);
+0206   <span class="keyword">else</span>
+0207     [x_opt,dum,exitflag] = quadprog(diag(rr{ind}.x_prior_std.^-2), -diag(rr{ind}.x_prior_std.^-2)* rr{ind}.x_prior_mean, [],[],rr{ind}.Aeq,rr{ind}.Beq,rr{ind}.x_min,rr{ind}.x_max,[],opt);
+0208   <span class="keyword">end</span>
+0209 
+0210   <span class="keyword">if</span> exitflag ~=1, exitflag 
+0211     error(<span class="string">'Error in optimisation'</span>); 
+0212   <span class="keyword">end</span> 
+0213   
+0214   my_Q               = x_opt(1);                     x_opt = x_opt(2:end);
+0215   my_beta_M_act      = x_opt(1:rr{ind}.my_n_M);      x_opt = x_opt(rr{ind}.my_n_M+1:end);
+0216   my_alpha_A_act     = x_opt(1:rr{ind}.my_n_Wplus);  x_opt = x_opt(rr{ind}.my_n_Wplus+1:end);
+0217   my_beta_I_act      = x_opt(1:rr{ind}.my_n_Wminus);
+0218   
+0219   Q_act(ind,1)                            = my_Q; 
+0220   beta_M_act(find(M_act(:,ind)),ind)      = my_beta_M_act;
+0221   alpha_A_act(find(Wplus_act(:,ind)),ind) = my_alpha_A_act;
+0222   beta_I_act(find(Wminus_act(:,ind)),ind) = my_beta_I_act;
+0223 
+0224 <span class="keyword">end</span>
+0225 
+0226 
+0227 <span class="comment">% -------------------------------------------------------------</span>
+0228 <span class="comment">% Solve compound balance equation for internal metabolites</span>
+0229 <span class="comment">% go through blocks of link matrix and solve equations for each block</span>
+0230 <span class="comment">% (for instance, blocks with only one entry: independend metabolites</span>
+0231 <span class="comment">%  on which no other metabolite depends)</span>
+0232 
+0233 <span class="keyword">for</span> it = 1:length(L_blocks),
+0234 
+0235   ind_L_col       = L_blocks{it}.columns;
+0236   ind_L_row       = L_blocks{it}.rows;
+0237   my_L            = L_act(ind_L_row,ind_L_col);
+0238   my_L_scaled     = L_act_scaled(ind_L_row,ind_L_col);
+0239 
+0240   my_x_prior_std  = [];
+0241   my_x_prior_mean = [];
+0242   my_Aeq          = [];
+0243   my_Beq          = [];
+0244   my_x_min        = [];
+0245   my_x_max        = [];
+0246 
+0247   <span class="keyword">for</span> itt = 1:length(ind_L_row)
+0248     it_int = ind_int_act(ind_L_row(itt));
+0249     my_x_min        = [my_x_min;        rr{it_int}.x_min          ];
+0250     my_x_max        = [my_x_max;        rr{it_int}.x_max          ];
+0251     my_x_prior_std  = [my_x_prior_std;  rr{it_int}.x_prior_std;   ];
+0252     my_x_prior_mean = [my_x_prior_mean; rr{it_int}.x_prior_mean   ];
+0253     my_Aeq          = matrix_add_block(my_Aeq,rr{it_int}.Aeq);
+0254     my_Beq          = [my_Beq;          rr{it_int}.Beq            ];    
+0255   <span class="keyword">end</span>
+0256 
+0257   my_Aeq = my_L_scaled' * my_Aeq;
+0258   my_Beq = my_L_scaled' * my_Beq;
+0259 
+0260   <span class="keyword">if</span> exist(<span class="string">'cplexqp'</span>,<span class="string">'file'</span>),
+0261     [x_opt,fval,exitflag] = cplexqp(diag(my_x_prior_std.^-2), -diag(my_x_prior_std.^-2) * my_x_prior_mean, [],[],my_Aeq,my_Beq,my_x_min,my_x_max,[],opt);
+0262   <span class="keyword">else</span>
+0263     [x_opt,fval,exitflag] = quadprog(diag(my_x_prior_std.^-2), -diag(my_x_prior_std.^-2) * my_x_prior_mean, [],[],my_Aeq,my_Beq,my_x_min,my_x_max,[],opt);
+0264   <span class="keyword">end</span>
+0265  
+0266   <span class="keyword">if</span> exitflag ~=1, error(<span class="string">'Error in optimisation'</span>); <span class="keyword">end</span> 
+0267   
+0268   <span class="keyword">for</span> itt = 1:length(ind_L_row)
+0269     it_int = ind_int_act(ind_L_row(itt));
+0270     my_Q               = x_opt(1);                        x_opt = x_opt(2:end);
+0271     my_beta_M_act      = x_opt(1:rr{it_int}.my_n_M);      x_opt = x_opt(rr{it_int}.my_n_M+1:end);
+0272     my_alpha_A_act     = x_opt(1:rr{it_int}.my_n_Wplus);  x_opt = x_opt(rr{it_int}.my_n_Wplus+1:end);
+0273     my_beta_I_act      = x_opt(1:rr{it_int}.my_n_Wminus); x_opt = x_opt(rr{it_int}.my_n_Wminus+1:end);
+0274   
+0275     Q_act(it_int,1)                               = my_Q; 
+0276     beta_M_act(find(M_act(:,it_int)),it_int)      = my_beta_M_act;
+0277     alpha_A_act(find(Wplus_act(:,it_int)),it_int) = my_alpha_A_act;
+0278     beta_I_act(find(Wminus_act(:,it_int)),it_int) = my_beta_I_act;
+0279   <span class="keyword">end</span>
+0280 
+0281 <span class="keyword">end</span>
+0282 
+0283 
+0284 <span class="comment">% --------------------------------------------------------------------------</span>
+0285 <span class="comment">% update Q values (in active subnetwork) if necessary</span>
+0286 
+0287 Q_mismatch = norm(Q_act(ind_int_act) - Q_act_predefined(ind_int_act));
+0288 
+0289 <span class="keyword">if</span> Q_mismatch/length(Q_mismatch) &lt; 10^-8,
+0290   display(<span class="string">'  Predefined internal economic loads have been realised'</span>);
+0291   Q_act(ind_int_act) = Q_act_predefined(ind_int_act);
+0292 <span class="keyword">else</span>,
+0293   display(<span class="string">'  Feasible solution requires change of internal economic loads'</span>);
+0294   [Q_act(ind_int_act), Q_act_predefined(ind_int_act)]
+0295 <span class="keyword">end</span>
+0296 
+0297 Q_act(abs(Q_act)&lt;10^-8) = 0;
+0298 
+0299 
+0300 <span class="comment">% --------------------------------------</span>
+0301 <span class="comment">% Convert saturation values to kinetic constants and build kinetics data struture for active submodel</span>
+0302 
+0303 alpha_M_act = alpha_to_betagamma(beta_M_act);
+0304 alpha_I_act = alpha_to_betagamma(beta_I_act);
+0305 
+0306 KM_act = alpha_to_k(alpha_M_act,c_act,h_act);
+0307 KA_act = alpha_to_k(alpha_A_act,c_act,h_act);
+0308 KI_act = alpha_to_k(alpha_I_act,c_act,h_act);
+0309 
+0310 <span class="comment">% set u values y/hu, adjust KV values to yield the right flux</span>
+0311 
+0312 network_act.kinetics.type = <span class="string">'ms'</span>;
+0313 network_act.kinetics.u    = y_act ./ hu_act;
+0314 network_act.kinetics.c    = c_act;
+0315 network_act.kinetics.KA   = KA_act;
+0316 network_act.kinetics.KI   = KI_act;
+0317 network_act.kinetics.KM   = KM_act;
+0318 network_act.kinetics.KV   = ones(nr_act,1);
+0319 network_act.kinetics.Keq  = exp(N_act' * [log(c_act)-1/RT*mu_act]);
+0320 network_act.kinetics.h    = h_act;
+0321 
+0322 vv = network_velocities(c_act, network_act);
+0323 
+0324 <span class="keyword">if</span> find(vv ==0), error(<span class="string">'zero flux encountered'</span>); <span class="keyword">end</span>
+0325 <span class="keyword">if</span> find(vv.*v_act&lt;0), error(<span class="string">'wrong flux direction'</span>); <span class="keyword">end</span>
+0326 
+0327 network_act.kinetics.KV = v_act ./ vv .* network_act.kinetics.KV;
+0328 
+0329 <span class="comment">% check</span>
+0330 <span class="comment">% v_act_kinetic = network_velocities(c_act, network_act); [v_act_kinetic,v_act]</span>
+0331 
+0332 u_act = network_act.kinetics.u;
+0333 
+0334 
+0335 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0336 <span class="comment">% check flux benefit response coefficients (should be equal to hu)</span>
+0337 <span class="comment">% R_act    = basic_control_analysis(network_act,c_act,struct('used',ones(length(v_act),1)));</span>
+0338 <span class="comment">% Rfvu_act = [ cba_constraints.zv(ind_active)' * R_act.RJ ]';</span>
+0339 <span class="comment">% Rfcu_act = [ -[Q_act(ind_int_act)./c_act(ind_int_act)]' * R_act.RS(ind_int_act,:) ]';</span>
+0340 <span class="comment">% ES_act1 = diag(1./v_act) * R_act.epsilon_1 * diag(c_act);</span>
+0341 <span class="comment">% figure(18); plot(cba_constraints.hu(ind_active), [Rfvu_act + Rfcu_act] .* [v_act~=0],'.');</span>
+0342 
+0343 <span class="comment">% check investment condition:</span>
+0344 <span class="comment">% zc_int_act_updated = -Q_act(ind_int_act)./c_act(ind_int_act);</span>
+0345 <span class="comment">% E_T_act = diag(1./[zeta_act-1]) * [diag(zeta_act) * Mplus_act - Mminus_act];</span>
+0346 <span class="comment">% ES_act  = E_T_act - beta_M_act .* M_act + alpha_A_act .* Wplus_act - beta_I_act .* Wminus_act;</span>
+0347 <span class="comment">% ES_act_unscaled = diag(v_act) * ES_act  * diag(1./c_act);</span>
+0348 <span class="comment">% LHS     = - L_act' *  zc_int_act_updated;</span>
+0349 <span class="comment">% RHS = L_act_scaled' * ES_act(:,ind_int_act)' * y_act</span>
+0350 <span class="comment">%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%</span>
+0351 
+0352 
+0353 <span class="comment">% ----------------------------------------------------------------------</span>
+0354 <span class="comment">% Return to entire model with inactive reactions -&gt; compute w and u</span>
+0355 <span class="comment">% construct the kinetics for the entire model ...</span>
+0356 
+0357 <span class="comment">% set all metabolites from the inactive subnetwork = external</span>
+0358 
+0359 u = 0 * v;    u(ind_active)     = u_act;  
+0360 Q = nan * c;  Q(ind_met_active) = Q_act;  
+0361 
+0362 em = sparse(nr,nm);
+0363 
+0364 <span class="comment">% for metabolites in inactive part of the network:</span>
+0365 <span class="comment">% remove allosteric interactions, but keep them as reactants (KM values)</span>
+0366 
+0367 network.kinetics                 = set_kinetics(network,<span class="string">'ms'</span>);
+0368 network.kinetics.u               = u;  
+0369 network.kinetics.c               = c;
+0370 network.kinetics.KA              = em;
+0371 network.kinetics.KI              = em;
+0372 network.kinetics.KA(ind_active, ind_met_active) = network_act.kinetics.KA ;  
+0373 network.kinetics.KI(ind_active, ind_met_active) = network_act.kinetics.KI ;  
+0374 network.kinetics.KM(ind_active, ind_met_active) = network_act.kinetics.KM ;
+0375 network.kinetics.KV(ind_active)  = network_act.kinetics.KV;
+0376 network.kinetics.Keq(ind_active) = network_act.kinetics.Keq;  
+0377 network.kinetics.h(ind_active)   = network_act.kinetics.h;  
+0378 
+0379 
+0380 <span class="comment">% ----------------------------------------------------------------------</span>
+0381 <span class="comment">% set all metabolites from inactive subnetwork external</span>
+0382 
+0383 ind_met_nonactive = setdiff(1:nm,ind_met_active);
+0384 network.external(ind_met_nonactive) = 1;
+0385 network.regulation_matrix(:,ind_met_nonactive) = 0;
+0386 
+0387 all_zext = zeros(nm,1);
+0388 all_zext(ind_ext) = cba_constraints.z_ext;
+0389 cba_constraints.z_ext = all_zext(find(network.external));
+0390 
+0391 <span class="comment">% check: v_kinetic = network_velocities(c,network); [v_kinetic,v]</span>
+0392 
+0393 
+0394 <span class="comment">% ----------------------------------------------------------------------</span>
+0395 <span class="comment">% .. compute the enzyme response coefficients and ..</span>
+0396 
+0397 R    = basic_control_analysis(network,c);
+0398 E_sc = diag(1./v) * R.epsilon_1 * diag(c); <span class="comment">% scaled elasticities</span>
+0399 
+0400 <span class="comment">% % check elasticities:</span>
+0401 <span class="comment">% % 1. from reconstructed ms rate law</span>
+0402 <span class="comment">% E_sc_act_1 = E_sc(ind_active,ind_met_active);</span>
+0403 <span class="comment">% % 2. from original beta values</span>
+0404 <span class="comment">% E_T_act    = diag(1./[zeta_act-1]) * [diag(zeta_act) * Mplus_act - Mminus_act];</span>
+0405 <span class="comment">% E_sc_act_2 = E_T_act - beta_M_act .* M_act + alpha_A_act .* Wplus_act - beta_I_act .* Wminus_act;</span>
+0406 
+0407 
+0408 <span class="comment">% ----------------------------------------------------------------------</span>
+0409 <span class="comment">% check the balance equations again</span>
+0410 
+0411 <span class="comment">% economic balance equation (left hand side, right hand side)</span>
+0412 LHS = v.*[network.N'*w + cba_constraints.z_int];
+0413 RHS = y;
+0414 mismatch = norm(LHS-RHS);
+0415 display(sprintf(<span class="string">'  Economic balance equation:   mismatch %f'</span>,mismatch))
+0416 <span class="keyword">if</span> mismatch&gt;10^-5,  [ LHS, RHS, LHS-RHS]
+0417 <span class="keyword">end</span>
+0418 
+0419 <span class="comment">% compound balance equation (left hand side, right hand side)</span>
+0420 <span class="comment">% first external, then internal metabolites</span>
+0421 <span class="comment">% (only metabolites in active subnetwork are considered)</span>
+0422 
+0423 LHS = [Q(ind_met_active(ind_ext_act)); <span class="keyword">...</span>
+0424        L_act' * Q(ind_met_active(ind_int_act));];
+0425 
+0426 RHS = [E_sc(ind_active,ind_met_active(ind_ext_act))' * y(ind_active); <span class="keyword">...</span>
+0427        L_act_scaled' * E_sc(ind_active,ind_met_active(ind_int_act))' * y(ind_active)];
+0428 
+0429 mismatch = norm(LHS-RHS);
+0430 display(sprintf(<span class="string">'  Investment balance equation: mismatch %f'</span>,mismatch))
+0431 <span class="keyword">if</span> mismatch&gt;10^-5, 
+0432   [ LHS, RHS, LHS-RHS]
+0433 <span class="keyword">end</span>
+0434 
+0435 
+0436 <span class="comment">% ----------------------------------------------------------------------</span>
+0437 <span class="comment">% .. check the steady state for stability;</span>
+0438 <span class="comment">% - eigenvalues must not have a positive real part</span>
+0439 <span class="comment">% - all complex eigenvalues must have a negative real part</span>
+0440 
+0441 M_eigenvalues = eig(full(R.M));
+0442 is_stable = [max(real(M_eigenvalues))&lt;=0] * [sum(real(M_eigenvalues(find(imag(M_eigenvalues))))==0)==0];
+0443 
+0444 <span class="keyword">switch</span> is_stable,
+0445   <span class="keyword">case</span> 1, display(<span class="string">'  o The steady state is stable'</span>);
+0446   <span class="keyword">case</span> 0, warning(<span class="string">'  o The steady state is unstable; please sample again!'</span>);
+0447 <span class="keyword">end</span>
+0448 
+0449 
+0450 <span class="comment">% ----------------------------------------------------------------------</span>
+0451 <span class="comment">% .. check if all active enzymes have a positive influence on the benefit</span>
+0452 
+0453 zc_updated = - Q ./ c;
+0454 zc_updated(find(network.external)) = 0;
+0455 zc_updated(isnan(zc_updated)) = 0;
+0456 
+0457 Rfvu = [ cba_constraints.zv' * R.RJ ]';
+0458 Rfcu = [         zc_updated' * R.RS ]';
+0459 Rfu  = Rfvu + Rfcu;
+0460 
+0461 <span class="keyword">switch</span> min(sign(Rfu(ind_active))),
+0462   <span class="keyword">case</span> 1,    display(<span class="string">'  o All active enzymes have positive marginal benefits'</span>);
+0463   <span class="keyword">otherwise</span>, error(<span class="string">'  Active enzyme with non-positive marginal benefit encountered'</span>);
+0464 <span class="keyword">end</span>
+0465 
+0466 
+0467 <span class="comment">% --------------------------------------------------------------------------------</span>
+0468 <span class="comment">% check eigenvalues of fitness curvature matrix</span>
+0469 <span class="comment">% - for an enzyme-econonic state, the matrix needs to be negative semidefinite</span>
+0470 <span class="comment">% - to get unique solutions for differential expression prediction,</span>
+0471 <span class="comment">%   it needs to be negative definite</span>
+0472 
+0473 <span class="keyword">if</span> cba_options.check_curvatures,
+0474   <span class="comment">%% FIXES NEEDED:</span>
+0475   <span class="comment">%% HERE THE FIRST ORDER IS COMPUTED FOR THE SECOND TIME .. MAYBE COMPUTE ONLY ONCE?????</span>
+0476   <span class="comment">%% COMPUTING THE TENSOR TAKES LONG .. JUST COMPUTE THE RELEVANT PART!!!</span>
+0477   [Ec,Eu,parameters,Ecc,Ecu,Euu] = elasticities(network,c,struct(<span class="string">'only_enzyme_levels'</span>,1));
+0478   [CJ, CS]     = control_coefficients(network.N, Ec,network.external);
+0479   [RSu, RJu, RSuu, RJuu] = response_coefficients(CS, Ec, Eu, Ecc, Ecu, Euu);
+0480   f_u_active = [cba_constraints.zv' * RJu(1:nr,ind_active)]';
+0481   f_uu_active = squeeze(tensor_product(cba_constraints.zv', RJuu(1:nr,ind_active,ind_active)));
+0482 
+0483   P_orth = eye(length(ind_active)) - 1/[f_u_active'*f_u_active] * [f_u_active*f_u_active'];
+0484   
+0485   <span class="comment">%% check eigenvalues in subspace orthogonal on f_u??  IS THAT CORRECT AT ALL??</span>
+0486   [f_uu_active_eigenvectors, f_uu_active_eigenvalues] = eig(full(  P_orth' * f_uu_active * P_orth));
+0487   [f_uu_active_eigenvalues,order] = sort(diag(f_uu_active_eigenvalues));
+0488   f_uu_eigenvectors = f_uu_active_eigenvectors(:,order);
+0489   display(sprintf(<span class="string">'  %d directions with positive benefit curvature'</span>,sum(f_uu_active_eigenvalues&gt;0)));
+0490   
+0491   figure(1); netgraph_concentrations(network,[],network.kinetics.u,1,struct(<span class="string">'arrowstyle'</span>,<span class="string">'none'</span>));
+0492   title(<span class="string">'Enzyme levels'</span>);
+0493   show_cc = nan * ones(nr,1); show_cc(ind_active) = f_u_active;
+0494   figure(2); netgraph_concentrations(network,[],network.kinetics.u,1,struct(<span class="string">'arrowstyle'</span>,<span class="string">'none'</span>));
+0495   title(<span class="string">'Enzyme benefit gradient'</span>);
+0496   show_cc = nan * ones(nr,1); show_cc(ind_active) = f_uu_eigenvectors(:,end);
+0497   figure(3); netgraph_concentrations(network,[],  show_cc,1,struct(<span class="string">'arrowstyle'</span>,<span class="string">'none'</span>));
+0498   title(<span class="string">'Curvature eigenvector'</span>);
+0499 <span class="keyword">end</span>
+0500 
+0501 
+0502 <span class="comment">% ---------------------------------------------</span>
+0503 <span class="comment">% output data structure 'res'</span>
+0504 
+0505 u(v==0) = 0;
+0506 
+0507 res.w   = w;
+0508 res.u   = u;
+0509 res.Q   = Q;
+0510 res.fc_updated = zc_updated;
+0511 res.kinetics = network.kinetics;
+0512 res.R   = R;
+0513 res.Rfu = Rfu;
+0514 res.Rfvu = Rfvu;
+0515 res.Rfcu = Rfcu;
+0516 
+0517 cba_constraints.zc    = zc_updated;
+0518 cba_constraints.Q_ext = Q(find(network.external));</pre></div>
+<hr><address>Generated on Tue 08-Oct-2019 15:38:31 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
 </body>
 </html>

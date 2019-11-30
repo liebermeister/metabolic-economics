@@ -1,7 +1,11 @@
 MATLAB code for Metabolic Economics
 ===================================
 
-Dependencies:
+[Metabolic economics](https://www.metabolic-economics.de/) is a theory optimal metabolic behaviour in cells. Complementing existing approaches for modelling cell metabolism, it employs a notion of "economic value" to characterize the importance of individual metablites, fluxes, and enzyme (for example, their impact on the achievable rate of biomass production).
+
+This repository contains Matlab functions to compute and analyse metabolic values, extending the [Metabolic Network Toolbox](https://github.com/liebermeister/metabolic-network-toolbox)
+
+## Dependencies
 
   o Matlab utility functions    (https://github.com/liebermeister/matlab-utils)
 
@@ -23,3 +27,5 @@ This package is released under the [GNU General Public License](LICENSE).
 
 ## Contact
 Please contact [Wolfram Liebermeister](wolfram.liebermeister@gmail.com) with any questions or comments.
+
+# References

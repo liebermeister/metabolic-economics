@@ -6,16 +6,16 @@
   <meta name="keywords" content="cba_opt_constraints">
   <meta name="description" content="">
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-  <meta name="generator" content="m2html &copy; 2003 Guillaume Flandin">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
   <meta name="robots" content="index, follow">
   <link type="text/css" rel="stylesheet" href="../../m2html.css">
 </head>
 <body>
 <a name="_top"></a>
-<div><a href="../../index.html">Home</a> &gt;  <a href="#">metabolic-economics</a> &gt; <a href="#">metabolic-economics-utils</a> &gt; cba_opt_constraints.m</div>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">metabolic-economics</a> &gt; <a href="index.html">metabolic-economics-utils</a> &gt; cba_opt_constraints.m</div>
 
 <!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
-<td align="right"><a href="index.html">Index for ./metabolic-economics/metabolic-economics-utils&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+<td align="right"><a href="index.html">Index for metabolic-economics/metabolic-economics-utils&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
 
 <h1>cba_opt_constraints
 </h1>
@@ -41,6 +41,20 @@ This function is called by:
 
 
 
-<hr><address>Generated on Mon 30-Jan-2017 18:10:41 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/">m2html</a></strong> &copy; 2003</address>
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [res,res_eq] = cba_opt_constraints(u,c_init,network,constraints)</a>
+0002 
+0003 <span class="keyword">global</span> my_c
+0004 
+0005 network.kinetics.u = u;
+0006 [s,v,sdot] = network_steady_state(network,my_c);
+0007 
+0008 res_sign   = - v(isfinite(constraints.v_sign)) .* constraints.v_sign(isfinite(constraints.v_sign));
+0009 res_min    =  constraints.v_min(isfinite(constraints.v_min)) - v(isfinite(constraints.v_min));
+0010 
+0011 res = [res_sign; res_min];
+0012 
+0013 res_eq = [];</pre></div>
+<hr><address>Generated on Tue 08-Oct-2019 15:38:31 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
 </body>
 </html>

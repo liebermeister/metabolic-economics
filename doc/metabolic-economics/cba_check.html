@@ -6,16 +6,16 @@
   <meta name="keywords" content="cba_check">
   <meta name="description" content="CBA_CHECK - Check flux mode, chem. pot. differences, and spec. flux costs for feasibility">
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-  <meta name="generator" content="m2html &copy; 2003 Guillaume Flandin">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
   <meta name="robots" content="index, follow">
   <link type="text/css" rel="stylesheet" href="../m2html.css">
 </head>
 <body>
 <a name="_top"></a>
-<div><a href="../index.html">Home</a> &gt;  <a href="#">metabolic-economics</a> &gt; cba_check.m</div>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">metabolic-economics</a> &gt; cba_check.m</div>
 
 <!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
-<td align="right"><a href="index.html">Index for ./metabolic-economics&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+<td align="right"><a href="index.html">Index for metabolic-economics&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
 
 <h1>cba_check
 </h1>
@@ -38,7 +38,7 @@
 <h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
 This function calls:
 <ul style="list-style-image:url(../matlabicon.gif)">
-<li><a href=".././metabolic-economics/metabolic-economics-utils/cbaf2.html" class="code" title="function [C, Ceq] = cbaf2(x,p)">cbaf2</a>	constraints for EBA and CBA</li></ul>
+<li><a href="../metabolic-economics/metabolic-economics-utils/cbaf2.html" class="code" title="function [C, Ceq] = cbaf2(x,p)">cbaf2</a>	constraints for EBA and CBA</li></ul>
 This function is called by:
 <ul style="list-style-image:url(../matlabicon.gif)">
 </ul>
@@ -46,6 +46,118 @@ This function is called by:
 
 
 
-<hr><address>Generated on Mon 30-Jan-2017 18:10:41 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/">m2html</a></strong> &copy; 2003</address>
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function isFeasible = cba_check(N, external, cba_constraints, cba_options, v, dmu, hv)</a>
+0002 
+0003 <span class="comment">% CBA_CHECK - Check flux mode, chem. pot. differences, and spec. flux costs for feasibility</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% isFeasible = cba_check(N, external, cba_constraints, cba_options, v, dmu, hv)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% Check whether flux mode v, chemical potentials dmu, and specific flux costs hv</span>
+0008 <span class="comment">% satisfy the thermodynamic and economic constraints</span>
+0009 
+0010 <span class="comment">% !!!</span>
+0011 <span class="comment">% care about zero fluxes ???</span>
+0012 
+0013 <span class="comment">%  ------------------------------------------------------------</span>
+0014 <span class="comment">% initialisation</span>
+0015 
+0016 <span class="comment">%rand('state',cba_options.seed);</span>
+0017 
+0018 [nm,nr]      = size(N);
+0019 
+0020 <span class="keyword">if</span> ~isfield(cba_constraints,<span class="string">'dmu_min'</span>), cba_constraints.dmu_min = -10 *ones(nr,1); <span class="keyword">end</span>
+0021 <span class="keyword">if</span> ~isfield(cba_constraints,<span class="string">'dmu_max'</span>), cba_constraints.dmu_max =  10 *ones(nr,1);; <span class="keyword">end</span>
+0022 <span class="keyword">if</span> ~isfield(cba_constraints,<span class="string">'y_min'</span>),   cba_constraints.y_min   = -10 *ones(nr,1);; <span class="keyword">end</span>
+0023 <span class="keyword">if</span> ~isfield(cba_constraints,<span class="string">'y_max'</span>),   cba_constraints.y_max   =  10 *ones(nr,1);; <span class="keyword">end</span>
+0024 
+0025 cba_constraints.v_min(find(cba_constraints.v_sign== 1)) = 0;
+0026 cba_constraints.v_max(find(cba_constraints.v_sign==-1)) = 0;
+0027 
+0028 zv           = cba_constraints.zv;
+0029 ind_v_fix    = find(isfinite(cba_constraints.v_fix));
+0030 ind_extsigns = find(isfinite(cba_constraints.ext_sign));
+0031 n_int        = sum(external==0); 
+0032 N_int        = N(find(external==0),:);
+0033 Ktot         = analyse_N(N);
+0034 Kint         = analyse_N(N(find(external==0),:));
+0035 nKint        = size(Kint,2);
+0036 nKtot        = size(Ktot,2);
+0037 my_eye       = eye(nr);
+0038 
+0039 weights      = ones(3*nr,1);     <span class="comment">% weights in regularisation term</span>
+0040 
+0041 
+0042 <span class="comment">% ------------------------------------------------------------</span>
+0043 <span class="comment">% vector x contains all v, dmu, and hv</span>
+0044 <span class="comment">% indices within vector:</span>
+0045 
+0046 ind_v   =          1:nr;
+0047 ind_dmu =    nr + (1:nr);
+0048 ind_hv  = 2* nr + (1:nr);
+0049 
+0050 <span class="comment">% ------------------------------------------------------</span>
+0051 <span class="comment">% cba_constraints:</span>
+0052 <span class="comment">%</span>
+0053 <span class="comment">% limits           : cba_constraints.v_min   &lt;=  x(ind_v)   &lt;= cba_constraints.v_max</span>
+0054 <span class="comment">%                  : cba_constraints.dmu_min &lt;=  x(ind_dmu) &lt;= cba_constraints.dmu_max</span>
+0055 <span class="comment">%                  : cba_constraints.y_min   &lt;=  x(ind_hv)  &lt;= cba_constraints.y_max</span>
+0056 <span class="comment">%</span>
+0057 <span class="comment">% fixed values     : x(ind_v_fix)         = cba_constraints.v_fix(ind_v_fix)</span>
+0058 <span class="comment">% stationary fluxes: N_int * x(ind_v )    = 0</span>
+0059 <span class="comment">% dmu constraint   : Ktot' * x(ind_hv)    = 0</span>
+0060 <span class="comment">% hv constraint    : Kint' * x(ind_hv)    = Kint' * zv</span>
+0061 <span class="comment">%</span>
+0062 <span class="comment">% feasible signs   : diag(x(ind_v)) * N' * x(ind_dmu) &lt;= - epsilon &lt; 0   where v == 0</span>
+0063 <span class="comment">%                  : diag(x(ind_v)) * N' * x(ind_hv)  &gt;=   epsilon &gt; 0   where v == 0</span>
+0064 <span class="comment">%</span>
+0065 <span class="comment">% regularisation   : min != sum(x.^2);</span>
+0066 
+0067 
+0068 <span class="comment">% ------------------------------------------------------</span>
+0069 <span class="comment">% rewrite this in the form</span>
+0070 <span class="comment">%</span>
+0071 <span class="comment">% Aeq * x  = beq</span>
+0072 <span class="comment">%   A * x &lt;= b</span>
+0073 <span class="comment">%       C  = cbaf2(x,N)   (for signs)</span>
+0074 <span class="comment">%     min != cbaf1(x)     (regularisation)</span>
+0075 
+0076 
+0077 xmin = [cba_constraints.v_min; cba_constraints.dmu_min; cba_constraints.y_min];
+0078 xmax = [cba_constraints.v_max; cba_constraints.dmu_max; cba_constraints.y_max];
+0079 
+0080 Aeq  = double([my_eye(ind_v_fix,:),  zeros(length(ind_v_fix),2*nr)      ; <span class="keyword">...</span>
+0081                N_int,                 zeros(n_int,2*nr)                ; <span class="keyword">...</span>
+0082                zeros(nKtot,nr),       Ktot',          zeros(nKtot,nr)  ; <span class="keyword">...</span>
+0083                zeros(nKint,2*nr),                     Kint'             ]);
+0084 
+0085 beq  = double([cba_constraints.v_fix(ind_v_fix);<span class="keyword">...</span><span class="comment"> </span>
+0086                zeros(n_int,1)           ;<span class="keyword">...</span>
+0087                zeros(nKtot,1)    ;<span class="keyword">...</span>
+0088                Kint' * zv ]);
+0089 
+0090 A = double([-diag(cba_constraints.ext_sign(ind_extsigns)) * N(ind_extsigns,:), <span class="keyword">...</span>
+0091             zeros(length(ind_extsigns),2*nr)]);
+0092 
+0093 b = zeros(length(ind_extsigns),1);
+0094 
+0095 
+0096 <span class="comment">% ------------------------------------------------------------------------</span>
+0097 
+0098 x = [v; dmu; hv];
+0099 
+0100 isFeasible = 1;
+0101 
+0102 ppp.N = full(N);
+0103 ppp.ind_v   = ind_v  ;
+0104 ppp.ind_dmu = ind_dmu;
+0105 ppp.ind_hv  = ind_hv ;
+0106 ppp.epsilon = 0;
+0107 
+0108 <span class="keyword">if</span> sum(x &lt; xmin) + sum(x &gt; xmax),          warning(<span class="string">'Limit constraints violated'</span>);      isFeasible = 0; <span class="keyword">end</span> 
+0109 <span class="keyword">if</span> norm( Aeq * x - beq)/length(beq)&gt;10^-5, warning(<span class="string">'Equality constraints violated'</span>);   isFeasible = 0; <span class="keyword">end</span> 
+0110 <span class="keyword">if</span> sum(A * x &gt; b),                         warning(<span class="string">'Inequality constraints violated'</span>); isFeasible = 0; <span class="keyword">end</span> 
+0111 <span class="keyword">if</span> sum(<a href="../metabolic-economics/metabolic-economics-utils/cbaf2.html" class="code" title="function [C, Ceq] = cbaf2(x,p)">cbaf2</a>(x,ppp) &gt; 0),                  warning(<span class="string">'Sign constraints violated'</span>);       isFeasible = 0; <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 08-Oct-2019 15:38:31 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
 </body>
 </html>

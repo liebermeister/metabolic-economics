@@ -6,16 +6,16 @@
   <meta name="keywords" content="cba_constraints_reduce_to_active">
   <meta name="description" content="CBA_CONSTRAINTS_REDUCE_TO_ACTIVE - Remove inactive reactions in cba_constraints">
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-  <meta name="generator" content="m2html &copy; 2003 Guillaume Flandin">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
   <meta name="robots" content="index, follow">
   <link type="text/css" rel="stylesheet" href="../../m2html.css">
 </head>
 <body>
 <a name="_top"></a>
-<div><a href="../../index.html">Home</a> &gt;  <a href="#">metabolic-economics</a> &gt; <a href="#">metabolic-economics-utils</a> &gt; cba_constraints_reduce_to_active.m</div>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">metabolic-economics</a> &gt; <a href="index.html">metabolic-economics-utils</a> &gt; cba_constraints_reduce_to_active.m</div>
 
 <!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
-<td align="right"><a href="index.html">Index for ./metabolic-economics/metabolic-economics-utils&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+<td align="right"><a href="index.html">Index for metabolic-economics/metabolic-economics-utils&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
 
 <h1>cba_constraints_reduce_to_active
 </h1>
@@ -43,6 +43,52 @@ This function is called by:
 
 
 
-<hr><address>Generated on Mon 30-Jan-2017 18:10:41 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/">m2html</a></strong> &copy; 2003</address>
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function cba_constraints_act = cba_constraints_reduce_to_active(cba_constraints,ind_active,ind_met_active,network,network_act)</a>
+0002 
+0003 <span class="comment">% CBA_CONSTRAINTS_REDUCE_TO_ACTIVE - Remove inactive reactions in cba_constraints</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% cba_constraints_act = cba_constraints_reduce_to_active(cba_constraints,ind_active,ind_met_active,network,network_act)</span>
+0006 
+0007 cba_constraints_act             = cba_constraints;
+0008 cba_constraints_act.v_min       = cba_constraints.v_min(ind_active); 
+0009 cba_constraints_act.v_max       = cba_constraints.v_max(ind_active); 
+0010 cba_constraints_act.v_sign      = cba_constraints.v_sign(ind_active); 
+0011 cba_constraints_act.v_mean      = cba_constraints.v_mean(ind_active); 
+0012 cba_constraints_act.v_std       = cba_constraints.v_std(ind_active); 
+0013 cba_constraints_act.v_fix       = cba_constraints.v_fix(ind_active); 
+0014 cba_constraints_act.ext_sign    = cba_constraints_act.ext_sign(ind_met_active);
+0015 cba_constraints_act.dmu_min     = cba_constraints.dmu_min(ind_active); 
+0016 cba_constraints_act.dmu_max     = cba_constraints.dmu_max(ind_active); 
+0017 cba_constraints_act.dmu_fix     = cba_constraints.dmu_fix(ind_active); 
+0018 cba_constraints_act.dmu_sign    = cba_constraints.dmu_sign(ind_active); 
+0019 cba_constraints_act.mu_min      = cba_constraints.mu_min(ind_met_active); 
+0020 cba_constraints_act.mu_max      = cba_constraints.mu_max(ind_met_active); 
+0021 cba_constraints_act.mu_fix      = cba_constraints.mu_fix(ind_met_active); 
+0022 cba_constraints_act.z_int       = cba_constraints.z_int(ind_active);
+0023 cba_constraints_act.u           = cba_constraints.u(ind_active);
+0024 cba_constraints_act.ind_ignore  = nan;    <span class="comment">%%%%%%%%%%%% FIX!!!</span>
+0025 cba_constraints_act.N_tot       = cba_constraints.N_tot(ind_met_active,ind_active);
+0026 cba_constraints_act.zv          = [];
+0027 
+0028 <span class="keyword">if</span> isfield(cba_constraints_act,<span class="string">'hu'</span>),
+0029   cba_constraints_act.hu       = cba_constraints.hu(ind_active);
+0030 <span class="keyword">end</span>
+0031 
+0032 <span class="keyword">if</span> isfield(cba_constraints_act,<span class="string">'ind_controllable'</span>),
+0033   cba_constraints_act       = rmfield(cba_constraints_act,<span class="string">'ind_controllable'</span>);
+0034 <span class="keyword">end</span>
+0035 
+0036 <span class="keyword">if</span> length(cba_constraints.z_ext),
+0037   nm = length(network.metabolites);
+0038   dummi = zeros(nm,1);
+0039   dummi(find(network.external)) = cba_constraints.z_ext;
+0040   dummi = dummi(ind_met_active);
+0041   new_external = network.external(ind_met_active);
+0042   cba_constraints_act.z_ext = dummi(find(new_external));
+0043 <span class="keyword">end</span>
+0044 
+0045 cba_constraints_act = <a href="cba_update_constraints.html" class="code" title="function cba_constraints = cba_update_constraints(cba_constraints,Next,network)">cba_update_constraints</a>(cba_constraints_act,network_act.N(find(network_act.external),:),network);</pre></div>
+<hr><address>Generated on Tue 08-Oct-2019 15:38:31 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
 </body>
 </html>

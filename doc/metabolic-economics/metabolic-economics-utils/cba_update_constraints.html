@@ -6,16 +6,16 @@
   <meta name="keywords" content="cba_update_constraints">
   <meta name="description" content="cba_constraints = cba_update_constraints(cba_constraints,Next)">
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-  <meta name="generator" content="m2html &copy; 2003 Guillaume Flandin">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
   <meta name="robots" content="index, follow">
   <link type="text/css" rel="stylesheet" href="../../m2html.css">
 </head>
 <body>
 <a name="_top"></a>
-<div><a href="../../index.html">Home</a> &gt;  <a href="#">metabolic-economics</a> &gt; <a href="#">metabolic-economics-utils</a> &gt; cba_update_constraints.m</div>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">metabolic-economics</a> &gt; <a href="index.html">metabolic-economics-utils</a> &gt; cba_update_constraints.m</div>
 
 <!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
-<td align="right"><a href="index.html">Index for ./metabolic-economics/metabolic-economics-utils&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+<td align="right"><a href="index.html">Index for metabolic-economics/metabolic-economics-utils&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
 
 <h1>cba_update_constraints
 </h1>
@@ -36,11 +36,38 @@ This function calls:
 </ul>
 This function is called by:
 <ul style="list-style-image:url(../../matlabicon.gif)">
-<li><a href="../.././metabolic-economics/cba_feasible_cycle.html" class="code" title="function [isFeasible, C_infeasible, C_cba, ind_non_orthogonal, n_wasteful] = cba_feasible_cycle(v, N, external, cba_constraints, network, flag_test_wasteful, flag_test_v_sign)">cba_feasible_cycle</a>	CBA_FEASIBLE_CYCLE - Check economical flux distribution (non-beneficial cycle criterion)</li><li><a href="../.././metabolic-economics/cba_feasible_lp.html" class="code" title="function [isFeasible, y, dmu] = cba_feasible_lp(v, network, cba_constraints, cba_options)">cba_feasible_lp</a>	CBA_FEASIBLE_LP - Check flux mode for EFA feasibility and choose enzyme costs and thermodynamic forces</li><li><a href="../.././metabolic-economics/cba_homogeneous_cost.html" class="code" title="function [w, delta_w, y, zx] = cba_homogeneous_cost(network,v,cba_constraints,y_given,method)">cba_homogeneous_cost</a>	CBA_HOMOGENEOUS_COST - Determine economic potentials from the principle of even cost</li><li><a href="cba_constraints_reduce_to_active.html" class="code" title="function cba_constraints_act = cba_constraints_reduce_to_active(cba_constraints,ind_active,ind_met_active,network,network_act)">cba_constraints_reduce_to_active</a>	CBA_CONSTRAINTS_REDUCE_TO_ACTIVE - Remove inactive reactions in cba_constraints</li></ul>
+<li><a href="../../metabolic-economics/cba_feasible_cycle.html" class="code" title="function [isFeasible, C_infeasible, C_cba, ind_non_orthogonal, n_wasteful] = cba_feasible_cycle(v, N, external, cba_constraints, network, flag_test_wasteful, flag_test_v_sign)">cba_feasible_cycle</a>	CBA_FEASIBLE_CYCLE - Check economical flux distribution (non-beneficial cycle criterion)</li><li><a href="../../metabolic-economics/cba_feasible_lp.html" class="code" title="function [isFeasible, y, dmu] = cba_feasible_lp(v, network, cba_constraints, cba_options)">cba_feasible_lp</a>	CBA_FEASIBLE_LP - Check flux mode for EFA feasibility and choose enzyme costs and thermodynamic forces</li><li><a href="../../metabolic-economics/cba_homogeneous_cost.html" class="code" title="function [w, delta_w, y, zx] = cba_homogeneous_cost(network,v,cba_constraints,y_given,method)">cba_homogeneous_cost</a>	CBA_HOMOGENEOUS_COST - Determine economic potentials from the principle of even cost</li><li><a href="cba_constraints_reduce_to_active.html" class="code" title="function cba_constraints_act = cba_constraints_reduce_to_active(cba_constraints,ind_active,ind_met_active,network,network_act)">cba_constraints_reduce_to_active</a>	CBA_CONSTRAINTS_REDUCE_TO_ACTIVE - Remove inactive reactions in cba_constraints</li></ul>
 <!-- crossreference -->
 
 
 
-<hr><address>Generated on Mon 30-Jan-2017 18:10:41 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/">m2html</a></strong> &copy; 2003</address>
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function cba_constraints = cba_update_constraints(cba_constraints,Next,network)</a>
+0002 
+0003 <span class="comment">% cba_constraints = cba_update_constraints(cba_constraints,Next)</span>
+0004 
+0005 cba_constraints.dmu_min(cba_constraints.dmu_sign&gt;0) = 0;
+0006 cba_constraints.dmu_max(cba_constraints.dmu_sign&lt;0) = 0;
+0007 
+0008 <span class="keyword">if</span> length(cba_constraints.z_ext),
+0009   zv = Next' * cba_constraints.z_ext + cba_constraints.z_int;
+0010 <span class="keyword">else</span>,
+0011   cba_constraints.z_ext = zeros(size(Next,1),1);
+0012   zv = cba_constraints.z_int;
+0013 <span class="keyword">end</span>  
+0014 
+0015 <span class="keyword">if</span> isfield(cba_constraints,<span class="string">'zv'</span>),
+0016   <span class="keyword">if</span> length(cba_constraints.zv),
+0017     <span class="keyword">if</span> sum(zv ~= cba_constraints.zv)
+0018       warning(<span class="string">'Changing existing entry zv'</span>);
+0019     <span class="keyword">end</span>
+0020   <span class="keyword">end</span>
+0021 <span class="keyword">end</span>
+0022 
+0023 cba_constraints.zv = zv;
+0024 
+0025 cba_constraints = fba_update_constraints(cba_constraints,network);
+0026</pre></div>
+<hr><address>Generated on Tue 08-Oct-2019 15:38:31 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
 </body>
 </html>

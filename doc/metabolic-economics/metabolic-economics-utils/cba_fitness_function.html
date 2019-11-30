@@ -6,16 +6,16 @@
   <meta name="keywords" content="cba_fitness_function">
   <meta name="description" content="[f,s,v,fplus,fminus,zx, s, v] = cba_fitness_function(u,c_init,network,constraints)">
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-  <meta name="generator" content="m2html &copy; 2003 Guillaume Flandin">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
   <meta name="robots" content="index, follow">
   <link type="text/css" rel="stylesheet" href="../../m2html.css">
 </head>
 <body>
 <a name="_top"></a>
-<div><a href="../../index.html">Home</a> &gt;  <a href="#">metabolic-economics</a> &gt; <a href="#">metabolic-economics-utils</a> &gt; cba_fitness_function.m</div>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">metabolic-economics</a> &gt; <a href="index.html">metabolic-economics-utils</a> &gt; cba_fitness_function.m</div>
 
 <!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
-<td align="right"><a href="index.html">Index for ./metabolic-economics/metabolic-economics-utils&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+<td align="right"><a href="index.html">Index for metabolic-economics/metabolic-economics-utils&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
 
 <h1>cba_fitness_function
 </h1>
@@ -43,6 +43,62 @@ This function is called by:
 
 
 
-<hr><address>Generated on Mon 30-Jan-2017 18:10:41 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/">m2html</a></strong> &copy; 2003</address>
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [f, s, v, fplus, fminus, zx] = cba_fitness_function(u, c_init, network, constraints)</a>
+0002 
+0003 <span class="comment">% [f,s,v,fplus,fminus,zx, s, v] = cba_fitness_function(u,c_init,network,constraints)</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% Fitness function used in CBA. Parameters are read from the fields of constraints</span>
+0006 
+0007 <span class="keyword">global</span> my_c
+0008 <span class="keyword">global</span> my_v
+0009 
+0010 c_init = my_c;
+0011 
+0012 network.kinetics.u = u;
+0013 [s, v, sdot]       = network_steady_state(network, c_init);
+0014 fplus              = constraints.zv' * v;
+0015 <span class="keyword">if</span> isfield(constraints,<span class="string">'fitness_options'</span>),
+0016   fminus = feval(constraints.fitness_options.cost_function,u,constraints.fitness_options);
+0017 <span class="keyword">else</span>
+0018   fminus = constraints.fx' * sum(u) + 0.5 * constraints.fxx * sum(u.^2);
+0019 <span class="keyword">end</span>
+0020 f                  = fplus - fminus;
+0021 
+0022 <span class="comment">% provide gradient?</span>
+0023 <span class="keyword">if</span> 0,
+0024   R   = basic_control_analysis(network,s);
+0025   RJu = R.RJ(:,1:length(u));
+0026   f_plus_grad  = [constraints.zv' * RJu]';
+0027   f_minus_grad = constraints.fx * ones(size(u)) + constraints.fxx * u;
+0028   f_grad       = f_plus_grad - f_minus_grad;
+0029 <span class="keyword">end</span>
+0030 
+0031 <span class="keyword">if</span> nargout &gt; 5,
+0032   nr = length(u);
+0033   zx = constraints.fx' * ones(nr,1) + constraints.fxx * u;
+0034 <span class="keyword">end</span>
+0035 
+0036 <span class="comment">% punish solutions violating stationarity</span>
+0037 epsilon = 10^-3;
+0038 error   = max(abs(sdot ./ [s(find(1-network.external)) + epsilon]));
+0039 
+0040 <span class="comment">% v</span>
+0041 <span class="comment">% sdot</span>
+0042 <span class="comment">% s(find(1-network.external))</span>
+0043 
+0044 <span class="keyword">if</span> error &gt; 0.0001, 
+0045   f = -10^8*error; 
+0046 <span class="keyword">else</span>
+0047   my_c = s;
+0048   my_v = v;
+0049 <span class="keyword">end</span>
+0050 
+0051 display(sprintf(<span class="string">'f: %f f_bene: %f f_cost: %f'</span>,f,fplus, fminus))
+0052 <span class="keyword">if</span> rand &lt; 0.2,
+0053   gp = struct(<span class="string">'arrowvalues'</span>,v,<span class="string">'actstyle'</span>,<span class="string">'fixed'</span>,<span class="string">'flag_edges'</span>,1);
+0054   netgraph_concentrations(network,s,u,1,gp); drawnow
+0055 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 08-Oct-2019 15:38:31 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
 </body>
 </html>

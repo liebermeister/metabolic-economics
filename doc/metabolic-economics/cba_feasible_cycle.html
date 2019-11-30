@@ -6,16 +6,16 @@
   <meta name="keywords" content="cba_feasible_cycle">
   <meta name="description" content="CBA_FEASIBLE_CYCLE - Check economical flux distribution (non-beneficial cycle criterion)">
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-  <meta name="generator" content="m2html &copy; 2003 Guillaume Flandin">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
   <meta name="robots" content="index, follow">
   <link type="text/css" rel="stylesheet" href="../m2html.css">
 </head>
 <body>
 <a name="_top"></a>
-<div><a href="../index.html">Home</a> &gt;  <a href="#">metabolic-economics</a> &gt; cba_feasible_cycle.m</div>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">metabolic-economics</a> &gt; cba_feasible_cycle.m</div>
 
 <!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
-<td align="right"><a href="index.html">Index for ./metabolic-economics&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+<td align="right"><a href="index.html">Index for metabolic-economics&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
 
 <h1>cba_feasible_cycle
 </h1>
@@ -39,7 +39,7 @@
 <h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
 This function calls:
 <ul style="list-style-image:url(../matlabicon.gif)">
-<li><a href=".././metabolic-economics/metabolic-economics-utils/cba_reduce_to_active_subnetwork.html" class="code" title="function [v,N_int,Es,network_act,constraints,ind_active,ind_met_active] = cba_reduce_to_active_subnetwork(v,N_int,Es,network,constraints)">cba_reduce_to_active_subnetwork</a>	[v,N_int,Es,network_act,constraints,ind_active,ind_met_active] = cba_reduce_to_active_subnetwork(v,N_int,Es,network,constraints)</li><li><a href=".././metabolic-economics/metabolic-economics-utils/cba_update_constraints.html" class="code" title="function cba_constraints = cba_update_constraints(cba_constraints,Next,network)">cba_update_constraints</a>	cba_constraints = cba_update_constraints(cba_constraints,Next)</li></ul>
+<li><a href="../metabolic-economics/metabolic-economics-utils/cba_reduce_to_active_subnetwork.html" class="code" title="function [v,N_int,Es,network_act,constraints,ind_active,ind_met_active] = cba_reduce_to_active_subnetwork(v,N_int,Es,network,constraints)">cba_reduce_to_active_subnetwork</a>	[v,N_int,Es,network_act,constraints,ind_active,ind_met_active] = cba_reduce_to_active_subnetwork(v,N_int,Es,network,constraints)</li><li><a href="../metabolic-economics/metabolic-economics-utils/cba_update_constraints.html" class="code" title="function cba_constraints = cba_update_constraints(cba_constraints,Next,network)">cba_update_constraints</a>	cba_constraints = cba_update_constraints(cba_constraints,Next)</li></ul>
 This function is called by:
 <ul style="list-style-image:url(../matlabicon.gif)">
 </ul>
@@ -47,6 +47,90 @@ This function is called by:
 
 
 
-<hr><address>Generated on Mon 30-Jan-2017 18:10:41 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/">m2html</a></strong> &copy; 2003</address>
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [isFeasible, C_infeasible, C_cba, ind_non_orthogonal, n_wasteful] = cba_feasible_cycle(v, N, external, cba_constraints, network, flag_test_wasteful, flag_test_v_sign)</a>
+0002 
+0003 <span class="comment">% CBA_FEASIBLE_CYCLE - Check economical flux distribution (non-beneficial cycle criterion)</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% [isFeasible,C_infeasible,C_cba,ind_non_orthogonal] = cba_feasible_cycle(v, N, external, cba_constraints, network, flag_test_wasteful, flag_test_v_sign)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% Calculation:</span>
+0008 <span class="comment">%  - reduce problem to active subnetwork</span>
+0009 <span class="comment">%  - check sign-orthogonality on futile cycles</span>
+0010 
+0011 
+0012 eval(default(<span class="string">'flag_test_wasteful'</span>,<span class="string">'0'</span>,<span class="string">'flag_test_v_sign'</span>,<span class="string">'1'</span>));
+0013 
+0014 cba_constraints = <a href="../metabolic-economics/metabolic-economics-utils/cba_update_constraints.html" class="code" title="function cba_constraints = cba_update_constraints(cba_constraints,Next,network)">cba_update_constraints</a>(cba_constraints,N(find(external),:));
+0015 zv              = cba_constraints.zv;
+0016 
+0017 <span class="keyword">if</span> zv'*v &lt;10^-8, warning(<span class="string">'Flux distribution is not beneficial'</span>); <span class="keyword">end</span>
+0018 
+0019 ind_int = find(external==0); 
+0020 N_int   = N(ind_int,:);
+0021 
+0022 
+0023 <span class="comment">% -------------------------------------------------------------</span>
+0024 
+0025 [v_act, N_int_act, Es, nn_act, cba_constraints_act, ind_act] = <a href="../metabolic-economics/metabolic-economics-utils/cba_reduce_to_active_subnetwork.html" class="code" title="function [v,N_int,Es,network_act,constraints,ind_active,ind_met_active] = cba_reduce_to_active_subnetwork(v,N_int,Es,network,constraints)">cba_reduce_to_active_subnetwork</a>(v,N_int,[],network,cba_constraints);
+0026 
+0027 constraint_matrix = cba_constraints_act.zv;
+0028 ii =  find(isfinite( cba_constraints_act.v_sign));
+0029 nr = size(constraint_matrix,1);
+0030 
+0031 <span class="keyword">if</span> length(ii),
+0032   display(<span class="string">'Treating flux bounds as dual variables like flux benefits'</span>);
+0033   <span class="keyword">for</span> it = 1:length(ii);
+0034     constraint_matrix = [ constraint_matrix, zeros(nr,1)];
+0035     constraint_matrix(ii(it),end) = cba_constraints_act.v_sign(ii(it));
+0036   <span class="keyword">end</span>
+0037 <span class="keyword">end</span>
+0038 
+0039 C = network_efmtool(nn_act, <span class="string">'internal'</span>, [], constraint_matrix);
+0040 
+0041 ind_non_orthogonal = [];
+0042 isFeasible         = 1; 
+0043 
+0044 <span class="keyword">if</span> size(C), [isFeasible,ind_non_orthogonal] = EBA_orth(sign(v_act),C); <span class="keyword">end</span>
+0045 
+0046 
+0047 <span class="comment">% -------------------------------------------------------------</span>
+0048 <span class="comment">% put fluxes back into non-reduced network</span>
+0049 
+0050 C_cba         = zeros(length(v),size(C,2));
+0051 C_cba(ind_act,:) = C;
+0052 
+0053 C_infeasible = C_cba(:,ind_non_orthogonal);
+0054 
+0055 <span class="keyword">if</span> flag_test_v_sign,
+0056   vs = cba_constraints.v_sign;
+0057   <span class="keyword">if</span> size(C_infeasible,2),
+0058     ind_correct_sign = find(sum(sign(diag(vs(find(isfinite(vs)))) * C_infeasible(find(isfinite(vs)),:) )==-1) ==0);
+0059     C_infeasible = C_infeasible(:,ind_correct_sign);
+0060     ind_non_orthogonal = ind_non_orthogonal(ind_correct_sign);
+0061   <span class="keyword">else</span>,      ind_correct_sign=[];
+0062      ind_non_orthogonal = [];
+0063   <span class="keyword">end</span>
+0064 <span class="keyword">end</span>
+0065 
+0066 
+0067 <span class="comment">% -------------------------------------------------------------</span>
+0068 <span class="comment">% sort infeasible cycles by size</span>
+0069 
+0070 [dum,order]        = sort(sum(abs(sign(C_infeasible)),1));
+0071 C_infeasible       = C_infeasible(:,order);
+0072 ind_non_orthogonal = ind_non_orthogonal(order);
+0073 
+0074 
+0075 <span class="comment">% test if flux differs from elementary wasteful modes in at least on reaction sign</span>
+0076 
+0077 <span class="keyword">if</span> flag_test_wasteful,
+0078   C = network_efmtool(nn_act, <span class="string">'internal'</span>, []);
+0079   C = C(:,find(cba_constraints_act.zv'*C&lt;0));
+0080   ind_wasteful = find(sum(diag(sign(v_act))*sign(C)==-1,1)==0);
+0081   n_wasteful = length(ind_wasteful&gt;0); 
+0082 <span class="keyword">end</span>
+0083</pre></div>
+<hr><address>Generated on Tue 08-Oct-2019 15:38:31 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
 </body>
 </html>

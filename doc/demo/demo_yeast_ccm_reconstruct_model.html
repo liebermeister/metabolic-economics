@@ -6,16 +6,16 @@
   <meta name="keywords" content="demo_yeast_ccm_reconstruct_model">
   <meta name="description" content="DEMO_YEAST_CCM_RECONSTUCT_MODEL - Demo script for reconstruction of enzyme-balanced models">
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-  <meta name="generator" content="m2html &copy; 2003 Guillaume Flandin">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
   <meta name="robots" content="index, follow">
   <link type="text/css" rel="stylesheet" href="../m2html.css">
 </head>
 <body>
 <a name="_top"></a>
-<div><a href="../index.html">Home</a> &gt;  <a href="#">demo</a> &gt; demo_yeast_ccm_reconstruct_model.m</div>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">demo</a> &gt; demo_yeast_ccm_reconstruct_model.m</div>
 
 <!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
-<td align="right"><a href="index.html">Index for ./demo&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+<td align="right"><a href="index.html">Index for demo&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
 
 <h1>demo_yeast_ccm_reconstruct_model
 </h1>
@@ -33,7 +33,7 @@
 <h2><a name="_cross"></a>CROSS-REFERENCE INFORMATION <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
 This function calls:
 <ul style="list-style-image:url(../matlabicon.gif)">
-<li><a href=".././metabolic-economics/cba_default_options.html" class="code" title="function [cba_options,cba_constraints] = cba_default_options(network)">cba_default_options</a>	CBA_DEFAULT_OPTIONS - Default settings for directives in 'cba_options' and 'cba_constraints'</li><li><a href=".././metabolic-economics/cba_homogeneous_cost.html" class="code" title="function [w, delta_w, y, zx] = cba_homogeneous_cost(network,v,cba_constraints,y_given,method)">cba_homogeneous_cost</a>	CBA_HOMOGENEOUS_COST - Determine economic potentials from the principle of even cost</li><li><a href=".././metabolic-economics/cba_reconstruct_model.html" class="code" title="function [network, res, cba_constraints] = cba_reconstruct_model(network,v,mu,cba_constraints,cba_options,y,w,c)">cba_reconstruct_model</a>	CBA_RECONSTRUCT_MODEL - Build model from economical flux profile</li></ul>
+<li><a href="../metabolic-economics/cba_default_options.html" class="code" title="function [cba_options,cba_constraints] = cba_default_options(network)">cba_default_options</a>	CBA_DEFAULT_OPTIONS - Default settings for directives in 'cba_options' and 'cba_constraints'</li><li><a href="../metabolic-economics/cba_homogeneous_cost.html" class="code" title="function [w, delta_w, y, zx] = cba_homogeneous_cost(network,v,cba_constraints,y_given,method)">cba_homogeneous_cost</a>	CBA_HOMOGENEOUS_COST - Determine economic potentials from the principle of even cost</li><li><a href="../metabolic-economics/cba_reconstruct_model.html" class="code" title="function [network, res, cba_constraints] = cba_reconstruct_model(network,v,mu,cba_constraints,cba_options,y,w,c)">cba_reconstruct_model</a>	CBA_RECONSTRUCT_MODEL - Build model from economical flux profile</li></ul>
 This function is called by:
 <ul style="list-style-image:url(../matlabicon.gif)">
 </ul>
@@ -41,6 +41,260 @@ This function is called by:
 
 
 
-<hr><address>Generated on Mon 30-Jan-2017 18:10:41 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/">m2html</a></strong> &copy; 2003</address>
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <span class="comment">% DEMO_YEAST_CCM_RECONSTUCT_MODEL - Demo script for reconstruction of enzyme-balanced models</span>
+0002 
+0003 demo_dir = [fileparts(which(mfilename))];
+0004 
+0005 cd(demo_dir)
+0006 
+0007 echo on;
+0008 clc
+0009 <span class="comment">%---------------------------------------------------------------------------------</span>
+0010 <span class="comment">% DEMO: Economic flux analysis for yeast central metabolism</span>
+0011 <span class="comment">%</span>
+0012 <span class="comment">% In this script, we build an enzyme-balanced kinetic model in the following way:</span>
+0013 <span class="comment">%</span>
+0014 <span class="comment">% 1.  Determine flux distribution using principle of minimal fluxes</span>
+0015 <span class="comment">% 2a. Choose thermodynamic forces</span>
+0016 <span class="comment">% 2b. Choose economic potentials (with the principle of homogeneous costs)</span>
+0017 <span class="comment">% 3.  Reconstruct an economic-kinetic model realising the flux distribution</span>
+0018 <span class="comment">%---------------------------------------------------------------------------------</span>
+0019  
+0020 <span class="comment">% Press key to continue</span>
+0021  
+0022 pause
+0023 clc
+0024 <span class="comment">% --------------------------------------------------------------------</span>
+0025 <span class="comment">% We load a network model of yeast central carbon metabolism.</span>
+0026  
+0027 <span class="comment">% The file contains the variables: network, network_CoHid, network_CoSplit, v_sign</span>
+0028  
+0029 load(<span class="string">'/data/yeast_ccm_network.mat'</span>);
+0030  
+0031 <span class="comment">% Press key to continue</span>
+0032  
+0033 pause
+0034 clc
+0035 <span class="comment">% --------------------------------------------------------------------</span>
+0036 <span class="comment">% Phase 1: Determine flux distribution (principle of minimal fluxes)</span>
+0037 <span class="comment">%          for ATP production, with some predefined flux directions</span>
+0038 <span class="comment">% ------------------------------------------------------------------</span>
+0039  
+0040 <span class="comment">% We create structs 'cba_options' and 'cba_constraints' with some default settings:</span>
+0041  
+0042 [cba_options, cba_constraints] = <a href="../metabolic-economics/cba_default_options.html" class="code" title="function [cba_options,cba_constraints] = cba_default_options(network)">cba_default_options</a>(network);
+0043  
+0044 <span class="comment">% Press key to continue</span>
+0045  
+0046 pause
+0047 clc
+0048 <span class="comment">% ------------------------------------------------------------------</span>
+0049 <span class="comment">% We adjust the settings for flux constraints</span>
+0050  
+0051 cba_constraints.v_sign = v_sign;
+0052  
+0053 <span class="comment">% We define some reactions to be inactive</span>
+0054 <span class="comment">% (strings like 'R00253' are reaction names in our network)</span>
+0055  
+0056 cba_constraints.v_fix(label_names({<span class="string">'R00253'</span>},network.actions)) = 0;
+0057 cba_constraints.v_fix(label_names({<span class="string">'R00258'</span>},network.actions)) = 0;
+0058 cba_constraints.v_fix(label_names({<span class="string">'R00114'</span>},network.actions)) = 0;
+0059 cba_constraints.v_fix(label_names({<span class="string">'R00243'</span>},network.actions)) = 0;
+0060 cba_constraints.v_fix(label_names({<span class="string">'R00341'</span>},network.actions)) = 0;
+0061 cba_constraints.v_fix(label_names({<span class="string">'R00344'</span>},network.actions)) = 0;
+0062 cba_constraints.v_fix(label_names({<span class="string">'R00711'</span>},network.actions)) = 0;
+0063  
+0064 <span class="comment">% We fix one flux direction</span>
+0065  
+0066 cba_constraints.v_sign(label_names({<span class="string">'R00342'</span>},network.actions)) = 1;
+0067  
+0068 <span class="comment">% We set an upper bound for one reaction</span>
+0069  
+0070 cba_constraints.v_max(label_names({<span class="string">'Oxphos__NADH__irrev__ATP'</span>},network.actions)) = 2;
+0071  
+0072 <span class="comment">% Press key to continue</span>
+0073  
+0074 pause
+0075 clc
+0076 <span class="comment">% ------------------------------------------------------------------</span>
+0077 <span class="comment">% Next, we adjust the settings for the metabolic objective</span>
+0078  
+0079 <span class="comment">% Our metabolic objective is the net production of ATP.</span>
+0080 <span class="comment">% We declare this by a setting a vector zx with weights</span>
+0081 <span class="comment">% for all external production rates</span>
+0082  
+0083 [nm,nr] = size(network.N);
+0084 
+0085 zx = zeros(nm,1); 
+0086 zx(label_names({<span class="string">'ATP'</span>},network.metabolites)) = 1;
+0087  
+0088 <span class="comment">% Using this vector, we define the marginal gain vectors (z_ext and zv)</span>
+0089  
+0090 cba_constraints.z_int = 0 * cba_constraints.z_int;
+0091 cba_constraints.z_ext = zx(find(network.external));
+0092 cba_constraints.zv    = network.N' * zx;
+0093  
+0094 <span class="comment">% Press key to continue</span>
+0095  
+0096 pause
+0097 clc
+0098 <span class="comment">% ------------------------------------------------------------------</span>
+0099 <span class="comment">% Now we determine the stationary fluxes</span>
+0100  
+0101 
+0102 <span class="comment">% 1. Flux Balance Analysis</span>
+0103  
+0104 [v_fba,f_benefit] = fba(network,cba_constraints);
+0105  
+0106  
+0107 <span class="comment">% 2. Fix objective achieved in FBA and run Flux Minimisation (PMF)</span>
+0108  
+0109 f_benefit = cba_constraints.zv'*v_fba; 
+0110  
+0111 v = pmf(network,cba_constraints,f_benefit,v_fba);
+0112  
+0113  
+0114 <span class="comment">% 3. Set very small fluxes to 0 and make the flux mode stationary</span>
+0115  
+0116 v(abs(v) &lt; 10^-5 *max(abs(v))) = 0;
+0117  
+0118 v = project_fluxes(network.N,find(network.external), v,[],sign(v),struct(<span class="string">'method'</span>,<span class="string">'euclidean'</span>));
+0119  
+0120  
+0121 <span class="comment">% Press key to continue</span>
+0122  
+0123 pause
+0124 clc
+0125 <span class="comment">% ---------------------------------------------------------------</span>
+0126 <span class="comment">% Just to be sure, we apply a function that would remove</span>
+0127 <span class="comment">% thermodynamically infeasible cycles from our flux mode</span>
+0128  
+0129 cba_constraints.ind_ignore = label_names({<span class="string">'Biomass_production'</span>},network.actions);
+0130  
+0131 [v,C] = eba_make_feasible(v, network. N, <span class="string">'loose'</span>, nan, cba_constraints.ind_ignore);
+0132  
+0133 <span class="comment">% Press key to continue</span>
+0134  
+0135 pause
+0136 clc
+0137 <span class="comment">% --------------------------------------------------------------------</span>
+0138 <span class="comment">% Phase 2: Choose chemical and economic potentials</span>
+0139  
+0140 <span class="comment">% --------------------------------------------------------------------</span>
+0141 <span class="comment">% We adjust the settings for choosing the chemical potentials</span>
+0142  
+0143 cba_constraints.dmu_limit     = 10;
+0144 cba_constraints.dmu_limit_min = 2;
+0145 cba_constraints.mu_min        = -20 * ones(size(cba_constraints.mu_min));
+0146 cba_constraints.mu_max        =  20 * ones(size(cba_constraints.mu_min));
+0147 cba_constraints.dmu_min       = -20 * ones(size(cba_constraints.dmu_min));
+0148 cba_constraints.dmu_max       =  20 * ones(size(cba_constraints.dmu_min));
+0149 cba_constraints.rho           = 100;
+0150   
+0151 <span class="comment">% Press key to continue</span>
+0152  
+0153 pause
+0154 clc
+0155 <span class="comment">% --------------------------------------------------------------------</span>
+0156 <span class="comment">% We choose the chemical potentials</span>
+0157  
+0158 [mu, success_flag] = sample_feasible_mu(network.N,find(network.external),v,cba_constraints,cba_options,<span class="string">'sample'</span>,1);
+0159   
+0160 <span class="comment">% Press key to continue</span>
+0161  
+0162 pause
+0163 clc
+0164 <span class="comment">% --------------------------------------------------------------------</span>
+0165 <span class="comment">% We choose the economic potentials</span>
+0166  
+0167 [w, delta_w, y, zx] = <a href="../metabolic-economics/cba_homogeneous_cost.html" class="code" title="function [w, delta_w, y, zx] = cba_homogeneous_cost(network,v,cba_constraints,y_given,method)">cba_homogeneous_cost</a>(network, v, cba_constraints);
+0168  
+0169 <span class="comment">% Press key to continue</span>
+0170  
+0171 pause
+0172 clc
+0173 <span class="comment">% --------------------------------------------------------------------</span>
+0174 <span class="comment">% Phase 3: Reconstruct an enzyme-balanced model</span>
+0175  
+0176 <span class="comment">% We set metabolite levels. For the sake of this example, we simply use random values</span>
+0177   
+0178 c = 1+5*rand(size(mu));
+0179  
+0180 <span class="comment">% Now we set some options for the model reconstruction ..</span>
+0181  
+0182 cba_options.check_curvatures = 0; 
+0183 cba_constraints.Q_ext        = [];
+0184 cba_constraints.hu           = ones(size(network.actions)); 
+0185  
+0186 <span class="comment">% .. and reconstruct the model</span>
+0187  
+0188 [network_new, res, cba_constraints_new] = <a href="../metabolic-economics/cba_reconstruct_model.html" class="code" title="function [network, res, cba_constraints] = cba_reconstruct_model(network,v,mu,cba_constraints,cba_options,y,w,c)">cba_reconstruct_model</a>(network, v, mu, cba_constraints, cba_options, y, w, c);
+0189   
+0190 <span class="comment">% Press key to continue</span>
+0191  
+0192 pause
+0193 clc
+0194 <span class="comment">% ------------------------------------------------------------------</span>
+0195 <span class="comment">% Finally, we plot some of the reconstructed quantities</span>
+0196  
+0197 <span class="comment">% 1. Network and external metabolites</span>
+0198  
+0199 figure(1); clf; 
+0200 netgraph_concentrations(network_CoSplit,network.external,[],1,struct(<span class="string">'actprintnames'</span>,1));
+0201   
+0202 <span class="comment">% Press key to continue</span>
+0203 pause
+0204  
+0205 <span class="comment">% 2. Metabolic fluxes</span>
+0206  
+0207 figure(2); clf; 
+0208 netgraph_concentrations(network_CoSplit,-network.external,v,1,struct(<span class="string">'actstyle'</span>,<span class="string">'none'</span>,<span class="string">'arrowsize'</span>,0.03));
+0209   
+0210 <span class="comment">% Press key to continue</span>
+0211 pause
+0212  
+0213 <span class="comment">% 3. Predefined flux signs</span>
+0214  
+0215 figure(3); clf; 
+0216 netgraph_concentrations(network_CoHid,[],v_sign,1,struct(<span class="string">'actstyle'</span>,<span class="string">'fixed'</span>,<span class="string">'arrowsize'</span>,0.03,<span class="string">'actprintnames'</span>,1));
+0217   
+0218 <span class="comment">% Press key to continue</span>
+0219 pause
+0220  
+0221 <span class="comment">% 4. The local ATP production (contribution of reactions to the metabolic gain)</span>
+0222  
+0223 figure(4); clf; 
+0224 netgraph_concentrations(network_CoSplit,[],cba_constraints.zv .* v,1,struct(<span class="string">'arrowstyle'</span>,<span class="string">'none'</span>));
+0225   
+0226 <span class="comment">% Press key to continue</span>
+0227 pause
+0228  
+0229 <span class="comment">% 5. The chemical potentials</span>
+0230  
+0231 figure(5); clf;
+0232 netgraph_concentrations(network_CoHid,mu,[-network.N'*mu].*[v~=0],1,struct(<span class="string">'actstyle'</span>,<span class="string">'none'</span>,<span class="string">'arrowsize'</span>,0.01));
+0233   
+0234 <span class="comment">% Press key to continue</span>
+0235 pause
+0236  
+0237 <span class="comment">% 6. The economic potentials</span>
+0238  
+0239 figure(5); clf;
+0240 netgraph_concentrations(network_CoHid,w,[-network.N'*w].*[v~=0],1,struct(<span class="string">'actstyle'</span>,<span class="string">'none'</span>,<span class="string">'arrowsize'</span>,0.01));
+0241  
+0242 <span class="comment">% Press key to continue</span>
+0243 pause
+0244 clc
+0245 <span class="comment">% That was it - we built a nice kinetic model!</span>
+0246  
+0247 <span class="comment">% All variables are still in your workspace.</span>
+0248  
+0249 <span class="comment">% Enjoy working with elasticity sampling!</span>
+0250  
+0251 <span class="comment">% Press key to finish</span>
+0252 pause
+0253 <span class="keyword">return</span></pre></div>
+<hr><address>Generated on Tue 08-Oct-2019 15:38:31 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
 </body>
 </html>

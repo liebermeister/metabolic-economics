@@ -6,16 +6,16 @@
   <meta name="keywords" content="cba_flux2model_constraint">
   <meta name="description" content="[g, geq] = cba_flux2model_constraint(E_vector,N,ind_ext,zv,epsilon)">
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-  <meta name="generator" content="m2html &copy; 2003 Guillaume Flandin">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
   <meta name="robots" content="index, follow">
   <link type="text/css" rel="stylesheet" href="../../m2html.css">
 </head>
 <body>
 <a name="_top"></a>
-<div><a href="../../index.html">Home</a> &gt;  <a href="#">metabolic-economics</a> &gt; <a href="#">metabolic-economics-utils</a> &gt; cba_flux2model_constraint.m</div>
+<div><a href="../../index.html">Home</a> &gt;  <a href="../index.html">metabolic-economics</a> &gt; <a href="index.html">metabolic-economics-utils</a> &gt; cba_flux2model_constraint.m</div>
 
 <!--<table width="100%"><tr><td align="left"><a href="../../index.html"><img alt="<" border="0" src="../../left.png">&nbsp;Master index</a></td>
-<td align="right"><a href="index.html">Index for ./metabolic-economics/metabolic-economics-utils&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
+<td align="right"><a href="index.html">Index for metabolic-economics/metabolic-economics-utils&nbsp;<img alt=">" border="0" src="../../right.png"></a></td></tr></table>-->
 
 <h1>cba_flux2model_constraint
 </h1>
@@ -41,6 +41,22 @@ This function is called by:
 
 
 
-<hr><address>Generated on Mon 30-Jan-2017 18:10:41 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/">m2html</a></strong> &copy; 2003</address>
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [g, geq] = cba_flux2model_constraint(E_vector,N,ind_ext,zv,epsilon)</a>
+0002 
+0003 <span class="comment">% [g, geq] = cba_flux2model_constraint(E_vector,N,ind_ext,zv,epsilon)</span>
+0004 
+0005 nr   = length(zv);
+0006 E    = -N';
+0007 E(find(E)) = E_vector;
+0008 
+0009 ind_int = setdiff(1:nr,ind_ext);
+0010 N_int = N(ind_int,:);
+0011 E_int = E(:,ind_int);
+0012 CJ    = eye(nr) - E_int * inv(N_int*E_int) * N_int;
+0013 
+0014 g     = - CJ' * zv + epsilon;
+0015 geq   = [];</pre></div>
+<hr><address>Generated on Tue 08-Oct-2019 15:38:31 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
 </body>
 </html>

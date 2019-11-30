@@ -6,16 +6,16 @@
   <meta name="keywords" content="cba_feasible_efm">
   <meta name="description" content="CBA_FEASIBLE_EFM - Test flux mode for economic feasibility (given non-beneficial flux modes)">
   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
-  <meta name="generator" content="m2html &copy; 2003 Guillaume Flandin">
+  <meta name="generator" content="m2html v1.5 &copy; 2003-2005 Guillaume Flandin">
   <meta name="robots" content="index, follow">
   <link type="text/css" rel="stylesheet" href="../m2html.css">
 </head>
 <body>
 <a name="_top"></a>
-<div><a href="../index.html">Home</a> &gt;  <a href="#">metabolic-economics</a> &gt; cba_feasible_efm.m</div>
+<div><a href="../index.html">Home</a> &gt;  <a href="index.html">metabolic-economics</a> &gt; cba_feasible_efm.m</div>
 
 <!--<table width="100%"><tr><td align="left"><a href="../index.html"><img alt="<" border="0" src="../left.png">&nbsp;Master index</a></td>
-<td align="right"><a href="index.html">Index for ./metabolic-economics&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
+<td align="right"><a href="index.html">Index for metabolic-economics&nbsp;<img alt=">" border="0" src="../right.png"></a></td></tr></table>-->
 
 <h1>cba_feasible_efm
 </h1>
@@ -48,6 +48,38 @@ This function is called by:
 
 
 
-<hr><address>Generated on Mon 30-Jan-2017 18:10:41 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/">m2html</a></strong> &copy; 2003</address>
+<h2><a name="_source"></a>SOURCE CODE <a href="#_top"><img alt="^" border="0" src="../up.png"></a></h2>
+<div class="fragment"><pre>0001 <a name="_sub0" href="#_subfunctions" class="code">function [isFeasible, ind_conflict] = cba_feasible_efm(v, C_efm)</a>
+0002 
+0003 <span class="comment">% CBA_FEASIBLE_EFM - Test flux mode for economic feasibility (given non-beneficial flux modes)</span>
+0004 <span class="comment">%</span>
+0005 <span class="comment">% [isFeasible, ind_conflict] = cba_feasible_efm(v, C_efm)</span>
+0006 <span class="comment">%</span>
+0007 <span class="comment">% Test a flux mode v for economic feasibility by comparing it to</span>
+0008 <span class="comment">% elementary non-beneficial flux modes (in matrix C_efm)</span>
+0009 <span class="comment">%</span>
+0010 <span class="comment">% ind_conflict: indices of those modes in C_efm that are in conflict with v</span>
+0011 
+0012 <span class="keyword">if</span> find(v==0), 
+0013 
+0014   warning(<span class="string">'Inactive reactions encountered. Feasibility cannot be directly tested'</span>);
+0015   isFeasible   = nan; 
+0016   ind_conflict = [];
+0017 
+0018 <span class="keyword">else</span>,
+0019 
+0020   isFeasible   = 1;
+0021   ind_conflict = [];
+0022 
+0023   <span class="keyword">for</span> it = size(C_efm,2),
+0024     ind_intersect = find( [v~=0] .* [C_efm(:,it)~=0]);
+0025     <span class="keyword">if</span> length(unique(sign(v(ind_intersect).*C_efm(ind_intersect,it))))==1,
+0026       isFeasible   = 0;
+0027       ind_conflict = [ind_conflict, it];
+0028     <span class="keyword">end</span>
+0029   <span class="keyword">end</span>
+0030   
+0031 <span class="keyword">end</span></pre></div>
+<hr><address>Generated on Tue 08-Oct-2019 15:38:31 by <strong><a href="http://www.artefact.tk/software/matlab/m2html/" title="Matlab Documentation in HTML">m2html</a></strong> &copy; 2005</address>
 </body>
 </html>
