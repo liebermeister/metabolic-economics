@@ -26,7 +26,7 @@ Please see the [installation instructions](INSTALLATION).
 This package is released under the [GNU General Public License](LICENSE).
 
 ## Contact
-Please contact [Wolfram Liebermeister](wolfram.liebermeister@gmail.com) with any questions or comments.
+Please contact [Wolfram Liebermeister](mailto:wolfram.liebermeister@gmail.com) with any questions or comments.
 
 ## References
 Liebermeister W. (2018), *Optimal metabolic states in cells*, [biorXiv doi:10.1101/483867](https://www.biorxiv.org/content/10.1101/483867v1)
