@@ -110,7 +110,7 @@ if isFeasible,
     opt = optimset('Display','off');
     [y, fval, exitflag] = linprog(-c, -G, -h, A, b,[],[], [], opt);
   else
-    opt = cplexoptimset('Display','off');
+    opt =  cplexoptimset('cplex');
     [y, fval, exitflag] = cplexlp(-c, -G, -h, A, b,[],[], [], opt);
   end
 

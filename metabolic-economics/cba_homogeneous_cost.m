@@ -80,7 +80,8 @@ end
 if(sum(double(B * w_int > b))),
   %% constraints violated
   if exist('cplexqp','file'),
-    opt = cplexoptimset('Algorithm', 'interior-point-convex','Display','off');
+    opt =  cplexoptimset('cplex');
+    %opt = cplexoptimset('Algorithm', 'interior-point-convex','Display','off');
     w_int = cplexqp(A,a,B,b,[],[],[],[],[],opt);
   else
     opt = optimset('Algorithm', 'interior-point-convex','Display','off');

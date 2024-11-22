@@ -28,7 +28,7 @@ function [network, res, cba_constraints] = cba_reconstruct_model(network,v,mu,cb
 
 
 if exist('cplexqp','file'),
-  opt = cplexoptimset('Display','off');
+  opt =  cplexoptimset('cplex');
 else
   opt = optimset('Display','off','Algorithm','interior-point-convex');
 end
