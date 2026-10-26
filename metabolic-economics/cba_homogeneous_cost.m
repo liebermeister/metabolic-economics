@@ -69,24 +69,13 @@ if find(eig(A)==0),
   alpha = 10^-8; A = A + alpha * eye(size(A));
 end
 
-%  if exist('cplexqp','file'),
-%    opt = cplexoptimset('Display','off','Algorithm','interior-point-convex');
-%    w_int = cplexqp(A,a,[],[],[],[],[],[],[],opt); 
-%  else,
-    opt = optimset('Display','off','Algorithm','interior-point-convex');
-    w_int = quadprog(A,a,[],[],[],[],[],[],[],opt); 
-%  end
+opt = optimset('Display','off','Algorithm','interior-point-convex');
+w_int = quadprog(A,a,[],[],[],[],[],[],[],opt); 
 
 if(sum(double(B * w_int > b))),
   %% constraints violated
-  if exist('cplexqp','file'),
-    opt =  cplexoptimset('cplex');
-    %opt = cplexoptimset('Algorithm', 'interior-point-convex','Display','off');
-    w_int = cplexqp(A,a,B,b,[],[],[],[],[],opt);
-  else
-    opt = optimset('Algorithm', 'interior-point-convex','Display','off');
-    w_int = quadprog(A,a,B,b,[],[],[],[],[],opt);
-  end
+  opt = optimset('Algorithm', 'interior-point-convex','Display','off');
+  w_int = qp_solve(A,a,B,b,[],[],[],[],[],opt);
 end
 
 

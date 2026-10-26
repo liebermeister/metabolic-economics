@@ -106,13 +106,7 @@ if isFeasible,
 
   %%y_act = lp236a(-c,-G,-h,A,b);
 
-  if exist('cplexlp','file'),
-    opt = optimset('Display','off');
-    [y, fval, exitflag] = linprog(-c, -G, -h, A, b,[],[], [], opt);
-  else
-    opt =  cplexoptimset('cplex');
-    [y, fval, exitflag] = cplexlp(-c, -G, -h, A, b,[],[], [], opt);
-  end
+  [y, fval, exitflag] = lp_solve(-c, -G, -h, A, b);
 
   if exitflag ~= 1,
     exitflag
